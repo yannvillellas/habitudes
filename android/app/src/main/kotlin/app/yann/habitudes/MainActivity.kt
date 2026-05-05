@@ -1,4 +1,4 @@
-package com.example.habitudes
+package app.yann.habitudes
 
 import io.flutter.embedding.android.FlutterActivity
 
