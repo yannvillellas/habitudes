@@ -1,94 +1,94 @@
 name: Flutter CI/CD
 
 on:
-    push:
-        branches:
-            - main
-    pull_request:
-        branches:
-            - main
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 permissions:
-    contents: write
+  contents: write
 
 jobs:
-    test:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Check out repository
-              uses: actions/checkout@v4
-            - name: Set up Flutter
-              uses: subosito/flutter-action@v2
-              with:
-                  channel: stable
-                  cache: true
-            - name: Install dependencies
-              run: flutter pub get
-            - name: Analyze
-              run: flutter analyze
-            - name: Run tests
-              run: flutter test
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Analyze
+        run: flutter analyze
+      - name: Run tests
+        run: flutter test
 
-    build_android_apk:
-        runs-on: ubuntu-latest
-        needs: test
-        if: github.event_name == 'push'
-        steps:
-            - name: Check out repository
-              uses: actions/checkout@v4
-            - name: Set up Flutter
-              uses: subosito/flutter-action@v2
-              with:
-                  channel: stable
-                  cache: true
-            - name: Install dependencies
-              run: flutter pub get
-            - name: Build release APK
-              run: flutter build apk --release
-            - name: Upload APK artifact
-              uses: actions/upload-artifact@v4
-              with:
-                  name: habitudes-android-apk-${{ github.run_number }}-${{ github.sha }}
-                  path: build/app/outputs/flutter-apk/app-release.apk
+  build_android_apk:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push'
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build release APK
+        run: flutter build apk --release
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: habitudes-android-apk-${{ github.run_number }}-${{ github.sha }}
+          path: build/app/outputs/flutter-apk/app-release.apk
 
-    release_android_apk:
-        runs-on: ubuntu-latest
-        if: github.ref == 'refs/heads/main'
-        needs: build_android_apk
-        steps:
-            - name: Check out repository
-              uses: actions/checkout@v4
-              with:
-                  fetch-depth: 0
-            - name: Set up Flutter
-              uses: subosito/flutter-action@v2
-              with:
-                  channel: stable
-                  cache: true
-            - name: Install dependencies
-              run: flutter pub get
-            - name: Read version from pubspec
-              id: pubspec
-              run: |
-                  VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}')
-                  echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-                  echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
-            - name: Fail if tag exists
-              run: |
-                  git fetch --tags
-                  if git rev-parse "${{ steps.pubspec.outputs.tag }}" >/dev/null 2>&1; then
-                    echo "Tag already exists: ${{ steps.pubspec.outputs.tag }}"
-                    exit 1
-                  fi
-            - name: Create tag
-              run: |
-                  git tag "${{ steps.pubspec.outputs.tag }}"
-                  git push origin "${{ steps.pubspec.outputs.tag }}"
-            - name: Build release APK
-              run: flutter build apk --release
-            - name: Upload APK to GitHub Release
-              uses: softprops/action-gh-release@v2
-              with:
-                  tag_name: ${{ steps.pubspec.outputs.tag }}
-                  name: Release ${{ steps.pubspec.outputs.tag }}
-                  files: build/app/outputs/flutter-apk/app-release.apk
+  release_android_apk:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    needs: build_android_apk
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Read version from pubspec
+        id: pubspec
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Fail if tag exists
+        run: |
+          git fetch --tags
+          if git rev-parse "${{ steps.pubspec.outputs.tag }}" >/dev/null 2>&1; then
+            echo "Tag already exists: ${{ steps.pubspec.outputs.tag }}"
+            exit 1
+          fi
+      - name: Create tag
+        run: |
+          git tag "${{ steps.pubspec.outputs.tag }}"
+          git push origin "${{ steps.pubspec.outputs.tag }}"
+      - name: Build release APK
+        run: flutter build apk --release
+      - name: Upload APK to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.pubspec.outputs.tag }}
+          name: Release ${{ steps.pubspec.outputs.tag }}
+          files: build/app/outputs/flutter-apk/app-release.apk
