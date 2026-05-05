@@ -7,6 +7,7 @@
 - Keep widgets small and composable; extract reusable pieces.
 - Avoid hard-coded colors; use `Theme.of(context).colorScheme` and `TextTheme`.
 - Ask before introducing a new state management library or architecture.
+- Follow Flutter’s official architecture recommendations; if an MVVM split is needed, use ViewModels and keep UI logic in the view layer.
 
 ## UI & Theming
 
@@ -17,7 +18,7 @@
 
 - Generate clean, production-ready code.
 - Minimize inline code comments; only explain non-obvious logic.
-- Add tests for non-trivial logic when requested.
+- Add or update tests before implementing any feature; use tests to validate expected behavior.
 
 ## References
 
