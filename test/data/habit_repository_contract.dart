@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:habitudes/data/repositories/habit_repository.dart';
-import 'package:habitudes/domain/habit.dart';
-import 'package:habitudes/domain/habit_completion.dart';
+import 'package:habitudes/domain/models/habit.dart';
+import 'package:habitudes/domain/models/habit_completion.dart';
 
 void runHabitRepositoryContract(Future<HabitRepository> Function() createRepository) {
   late HabitRepository repository;

@@ -1,6 +1,6 @@
 import 'package:habitudes/data/repositories/habit_repository.dart';
-import 'package:habitudes/domain/habit.dart';
-import 'package:habitudes/domain/habit_completion.dart';
+import 'package:habitudes/domain/models/habit.dart';
+import 'package:habitudes/domain/models/habit_completion.dart';
 
 class FakeHabitRepository implements HabitRepository {
   final Map<String, Habit> _habits = <String, Habit>{};

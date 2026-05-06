@@ -1,7 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
-import '../../domain/habit.dart';
-import '../../domain/habit_completion.dart';
+import '../../domain/models/habit.dart';
+import '../../domain/models/habit_completion.dart';
 import '../repositories/habit_repository.dart';
 import '../services/database_service.dart';
 

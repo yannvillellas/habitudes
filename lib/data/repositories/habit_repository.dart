@@ -1,5 +1,5 @@
-import '../../domain/habit.dart';
-import '../../domain/habit_completion.dart';
+import '../../domain/models/habit.dart';
+import '../../domain/models/habit_completion.dart';
 
 abstract class HabitRepository {
   Future<void> saveHabit(Habit habit);
