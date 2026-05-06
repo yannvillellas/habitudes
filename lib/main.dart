@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite/sqflite.dart';
 
+import 'config/theme.dart';
 import 'data/repositories/habit_repository.dart';
 import 'data/repositories/habit_repository_sqflite.dart';
 import 'data/services/database_service.dart';
@@ -24,7 +25,9 @@ class HabitudesApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Habitudes',
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: ThemeMode.system,
       home: const Placeholder(),
     );
   }
