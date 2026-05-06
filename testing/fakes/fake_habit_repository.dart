@@ -30,13 +30,7 @@ class FakeHabitRepository implements HabitRepository {
       return;
     }
 
-    _habits[habitId] = Habit(
-      id: habit.id,
-      name: habit.name,
-      colorValue: habit.colorValue,
-      createdAt: habit.createdAt,
-      isArchived: true,
-    );
+    _habits[habitId] = Habit(id: habit.id, name: habit.name, createdAt: habit.createdAt, isArchived: true);
   }
 
   @override

@@ -15,7 +15,6 @@ class HabitRepositorySqflite implements HabitRepository {
       CREATE TABLE habits(
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
-        color_value INTEGER NOT NULL,
         created_at INTEGER NOT NULL,
         is_archived INTEGER NOT NULL DEFAULT 0,
         sort_order INTEGER NOT NULL
@@ -42,7 +41,6 @@ class HabitRepositorySqflite implements HabitRepository {
       await _service.insert('habits', {
         'id': habit.id,
         'name': habit.name,
-        'color_value': habit.colorValue,
         'created_at': habit.createdAt.millisecondsSinceEpoch,
         'is_archived': habit.isArchived ? 1 : 0,
         'sort_order': nextOrder,
@@ -52,7 +50,6 @@ class HabitRepositorySqflite implements HabitRepository {
         'habits',
         {
           'name': habit.name,
-          'color_value': habit.colorValue,
           'created_at': habit.createdAt.millisecondsSinceEpoch,
           'is_archived': habit.isArchived ? 1 : 0,
         },
@@ -114,7 +111,6 @@ class HabitRepositorySqflite implements HabitRepository {
     return Habit(
       id: row['id']! as String,
       name: row['name']! as String,
-      colorValue: row['color_value']! as int,
       createdAt: DateTime.fromMillisecondsSinceEpoch(row['created_at']! as int, isUtc: true),
       isArchived: (row['is_archived'] as int) == 1,
     );

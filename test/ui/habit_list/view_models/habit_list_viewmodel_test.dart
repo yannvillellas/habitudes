@@ -21,12 +21,8 @@ void main() {
     });
 
     test('exposes habits from repository after load', () async {
-      await repository.saveHabit(
-        Habit(id: 'h1', name: 'Read', colorValue: 0xFF00FF00, createdAt: DateTime.utc(2026, 5, 6)),
-      );
-      await repository.saveHabit(
-        Habit(id: 'h2', name: 'Walk', colorValue: 0xFF0000FF, createdAt: DateTime.utc(2026, 5, 6)),
-      );
+      await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+      await repository.saveHabit(Habit(id: 'h2', name: 'Walk', createdAt: DateTime.utc(2026, 5, 6)));
 
       await viewModel.load();
 
@@ -36,12 +32,8 @@ void main() {
     });
 
     test('filters archived habits by default', () async {
-      await repository.saveHabit(
-        Habit(id: 'h1', name: 'Read', colorValue: 0xFF00FF00, createdAt: DateTime.utc(2026, 5, 6)),
-      );
-      await repository.saveHabit(
-        Habit(id: 'h2', name: 'Walk', colorValue: 0xFF0000FF, createdAt: DateTime.utc(2026, 5, 6)),
-      );
+      await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+      await repository.saveHabit(Habit(id: 'h2', name: 'Walk', createdAt: DateTime.utc(2026, 5, 6)));
       await repository.archiveHabit('h2');
 
       await viewModel.load();
@@ -51,12 +43,8 @@ void main() {
     });
 
     test('can show archived habits when toggled', () async {
-      await repository.saveHabit(
-        Habit(id: 'h1', name: 'Read', colorValue: 0xFF00FF00, createdAt: DateTime.utc(2026, 5, 6)),
-      );
-      await repository.saveHabit(
-        Habit(id: 'h2', name: 'Walk', colorValue: 0xFF0000FF, createdAt: DateTime.utc(2026, 5, 6)),
-      );
+      await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+      await repository.saveHabit(Habit(id: 'h2', name: 'Walk', createdAt: DateTime.utc(2026, 5, 6)));
       await repository.archiveHabit('h2');
 
       viewModel.toggleShowArchived();
@@ -84,27 +72,19 @@ void main() {
     });
 
     test('load picks up new habits added to repository', () async {
-      await repository.saveHabit(
-        Habit(id: 'h1', name: 'Read', colorValue: 0xFF00FF00, createdAt: DateTime.utc(2026, 5, 6)),
-      );
+      await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
       await viewModel.load();
       expect(viewModel.habits, hasLength(1));
 
-      await repository.saveHabit(
-        Habit(id: 'h2', name: 'Walk', colorValue: 0xFF0000FF, createdAt: DateTime.utc(2026, 5, 6)),
-      );
+      await repository.saveHabit(Habit(id: 'h2', name: 'Walk', createdAt: DateTime.utc(2026, 5, 6)));
       await viewModel.load();
 
       expect(viewModel.habits, hasLength(2));
     });
 
     test('hide archived again shows only active habits', () async {
-      await repository.saveHabit(
-        Habit(id: 'h1', name: 'Read', colorValue: 0xFF00FF00, createdAt: DateTime.utc(2026, 5, 6)),
-      );
-      await repository.saveHabit(
-        Habit(id: 'h2', name: 'Walk', colorValue: 0xFF0000FF, createdAt: DateTime.utc(2026, 5, 6)),
-      );
+      await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+      await repository.saveHabit(Habit(id: 'h2', name: 'Walk', createdAt: DateTime.utc(2026, 5, 6)));
       await repository.archiveHabit('h2');
 
       // Show all

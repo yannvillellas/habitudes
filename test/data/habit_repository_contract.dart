@@ -12,18 +12,8 @@ void runHabitRepositoryContract(Future<HabitRepository> Function() createReposit
   });
 
   test('saves and updates a habit by id', () async {
-    final initialHabit = Habit(
-      id: 'habit-1',
-      name: 'Read',
-      colorValue: 0xFF00FF00,
-      createdAt: DateTime.utc(2026, 5, 6),
-    );
-    final updatedHabit = Habit(
-      id: 'habit-1',
-      name: 'Read 20 pages',
-      colorValue: 0xFF0000FF,
-      createdAt: DateTime.utc(2026, 5, 7),
-    );
+    final initialHabit = Habit(id: 'habit-1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6));
+    final updatedHabit = Habit(id: 'habit-1', name: 'Read 20 pages', createdAt: DateTime.utc(2026, 5, 7));
 
     await repository.saveHabit(initialHabit);
     await repository.saveHabit(updatedHabit);
@@ -33,20 +23,13 @@ void runHabitRepositoryContract(Future<HabitRepository> Function() createReposit
     expect(habits, hasLength(1));
     expect(habits.single.id, updatedHabit.id);
     expect(habits.single.name, updatedHabit.name);
-    expect(habits.single.colorValue, updatedHabit.colorValue);
     expect(habits.single.createdAt, updatedHabit.createdAt);
   });
 
   test('preserves insertion order for active habits', () async {
-    await repository.saveHabit(
-      Habit(id: 'habit-1', name: 'Read', colorValue: 0xFF00FF00, createdAt: DateTime.utc(2026, 5, 6)),
-    );
-    await repository.saveHabit(
-      Habit(id: 'habit-2', name: 'Walk', colorValue: 0xFF0000FF, createdAt: DateTime.utc(2026, 5, 6)),
-    );
-    await repository.saveHabit(
-      Habit(id: 'habit-3', name: 'Meditate', colorValue: 0xFFFF0000, createdAt: DateTime.utc(2026, 5, 6)),
-    );
+    await repository.saveHabit(Habit(id: 'habit-1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+    await repository.saveHabit(Habit(id: 'habit-2', name: 'Walk', createdAt: DateTime.utc(2026, 5, 6)));
+    await repository.saveHabit(Habit(id: 'habit-3', name: 'Meditate', createdAt: DateTime.utc(2026, 5, 6)));
 
     final habits = await repository.listHabits();
 
@@ -54,12 +37,8 @@ void runHabitRepositoryContract(Future<HabitRepository> Function() createReposit
   });
 
   test('filters archived habits unless requested', () async {
-    await repository.saveHabit(
-      Habit(id: 'habit-1', name: 'Read', colorValue: 0xFF00FF00, createdAt: DateTime.utc(2026, 5, 6)),
-    );
-    await repository.saveHabit(
-      Habit(id: 'habit-2', name: 'Walk', colorValue: 0xFF0000FF, createdAt: DateTime.utc(2026, 5, 6)),
-    );
+    await repository.saveHabit(Habit(id: 'habit-1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+    await repository.saveHabit(Habit(id: 'habit-2', name: 'Walk', createdAt: DateTime.utc(2026, 5, 6)));
     await repository.archiveHabit('habit-2');
 
     final activeHabits = await repository.listHabits();
