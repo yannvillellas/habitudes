@@ -1,16 +1,48 @@
-# habitudes
+# Habitudes
 
-A new Flutter project.
+A cross-platform habit tracker built with Flutter, demonstrating modern app architecture best practices.
+
+## About
+
+Track daily habits, record completions, and monitor streaks. Supports multiple platforms (Android, iOS, web) with a Material 3 UI that adapts to your device's color scheme.
+
+## Tech Stack
+
+- **Framework**: Flutter (Dart)
+- **State management**: MVVM with `ChangeNotifier` + `ListenableBuilder`
+- **Dependency injection**: `provider`
+- **Navigation**: `go_router`
+- **Persistence**: SQLite via `sqflite`
+- **Theming**: Material 3 with seed-generated colors and platform dynamic color (Android 12+)
+
+## Architecture
+
+Follows the [Flutter architecture recommendations](https://docs.flutter.dev/app-architecture/guide):
+
+```text
+UI layer (by feature)     Data layer (by type)
+─────────────────────     ────────────────────
+View ⇄ ViewModel    →     Repository → Service
+```
+
+- **Views**: `StatelessWidget` — display UI state, no business logic
+- **ViewModels**: `ChangeNotifier` — manage UI state, expose commands
+- **Repositories**: single source of truth per data type
+- **Services**: stateless wrappers around external data sources (SQLite)
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+```bash
+flutter pub get
+flutter run
+```
 
-A few resources to get you started if this is your first Flutter project:
+Run tests:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+```bash
+flutter test
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## License
+
+GNU General Public License v3.0 — see [LICENSE](LICENSE).
