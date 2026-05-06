@@ -26,7 +26,7 @@ void runHabitRepositoryContract(Future<HabitRepository> Function() createReposit
     expect(habits.single.createdAt, updatedHabit.createdAt);
   });
 
-  test('preserves insertion order for active habits', () async {
+  test('preserves insertion order', () async {
     await repository.saveHabit(Habit(id: 'habit-1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
     await repository.saveHabit(Habit(id: 'habit-2', name: 'Walk', createdAt: DateTime.utc(2026, 5, 6)));
     await repository.saveHabit(Habit(id: 'habit-3', name: 'Meditate', createdAt: DateTime.utc(2026, 5, 6)));
@@ -34,27 +34,6 @@ void runHabitRepositoryContract(Future<HabitRepository> Function() createReposit
     final habits = await repository.listHabits();
 
     expect(habits.map((habit) => habit.id), <String>['habit-1', 'habit-2', 'habit-3']);
-  });
-
-  test('filters archived habits unless requested', () async {
-    await repository.saveHabit(Habit(id: 'habit-1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
-    await repository.saveHabit(Habit(id: 'habit-2', name: 'Walk', createdAt: DateTime.utc(2026, 5, 6)));
-    await repository.archiveHabit('habit-2');
-
-    final activeHabits = await repository.listHabits();
-    final allHabits = await repository.listHabits(includeArchived: true);
-
-    expect(activeHabits, hasLength(1));
-    expect(activeHabits.single.id, 'habit-1');
-    expect(allHabits, hasLength(2));
-    expect(allHabits.last.isArchived, isTrue);
-  });
-
-  test('archiveHabit leaves unknown habits untouched', () async {
-    await repository.archiveHabit('missing-habit');
-
-    final habits = await repository.listHabits(includeArchived: true);
-    expect(habits, isEmpty);
   });
 
   test('records date-only completions and deduplicates same day entries', () async {

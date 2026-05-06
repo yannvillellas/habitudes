@@ -16,7 +16,6 @@ class HabitRepositorySqflite implements HabitRepository {
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         created_at INTEGER NOT NULL,
-        is_archived INTEGER NOT NULL DEFAULT 0,
         sort_order INTEGER NOT NULL
       )
     ''');
@@ -42,17 +41,12 @@ class HabitRepositorySqflite implements HabitRepository {
         'id': habit.id,
         'name': habit.name,
         'created_at': habit.createdAt.millisecondsSinceEpoch,
-        'is_archived': habit.isArchived ? 1 : 0,
         'sort_order': nextOrder,
       });
     } else {
       await _service.update(
         'habits',
-        {
-          'name': habit.name,
-          'created_at': habit.createdAt.millisecondsSinceEpoch,
-          'is_archived': habit.isArchived ? 1 : 0,
-        },
+        {'name': habit.name, 'created_at': habit.createdAt.millisecondsSinceEpoch},
         where: 'id = ?',
         whereArgs: [habit.id],
       );
@@ -60,20 +54,10 @@ class HabitRepositorySqflite implements HabitRepository {
   }
 
   @override
-  Future<List<Habit>> listHabits({bool includeArchived = false}) async {
-    String? where;
-    if (!includeArchived) {
-      where = 'is_archived = 0';
-    }
-
-    final rows = await _service.query('habits', where: where, orderBy: 'sort_order ASC');
+  Future<List<Habit>> listHabits() async {
+    final rows = await _service.query('habits', orderBy: 'sort_order ASC');
 
     return rows.map(_rowToHabit).toList(growable: false);
-  }
-
-  @override
-  Future<void> archiveHabit(String habitId) async {
-    await _service.update('habits', {'is_archived': 1}, where: 'id = ?', whereArgs: [habitId]);
   }
 
   @override
@@ -112,7 +96,6 @@ class HabitRepositorySqflite implements HabitRepository {
       id: row['id']! as String,
       name: row['name']! as String,
       createdAt: DateTime.fromMillisecondsSinceEpoch(row['created_at']! as int, isUtc: true),
-      isArchived: (row['is_archived'] as int) == 1,
     );
   }
 

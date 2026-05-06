@@ -11,16 +11,8 @@ class HabitListViewModel extends ChangeNotifier {
   List<Habit> _habits = [];
   List<Habit> get habits => _habits;
 
-  bool _showArchived = false;
-  bool get showArchived => _showArchived;
-
   Future<void> load() async {
-    _habits = await _habitRepository.listHabits(includeArchived: _showArchived);
-    notifyListeners();
-  }
-
-  void toggleShowArchived() {
-    _showArchived = !_showArchived;
+    _habits = await _habitRepository.listHabits();
     notifyListeners();
   }
 }

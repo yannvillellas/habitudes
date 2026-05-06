@@ -17,20 +17,10 @@ class FakeHabitRepository implements HabitRepository {
   }
 
   @override
-  Future<List<Habit>> listHabits({bool includeArchived = false}) async {
+  Future<List<Habit>> listHabits() async {
     final habits = [for (final habitId in _habitOrder) _habits[habitId]!];
 
-    return habits.where((habit) => includeArchived || !habit.isArchived).toList(growable: false);
-  }
-
-  @override
-  Future<void> archiveHabit(String habitId) async {
-    final habit = _habits[habitId];
-    if (habit == null) {
-      return;
-    }
-
-    _habits[habitId] = Habit(id: habit.id, name: habit.name, createdAt: habit.createdAt, isArchived: true);
+    return habits.toList(growable: false);
   }
 
   @override
