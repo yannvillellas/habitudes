@@ -1,3 +1,4 @@
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:provider/provider.dart';
@@ -23,12 +24,16 @@ class HabitudesApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Habitudes',
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.system,
-      home: const Placeholder(),
+    return DynamicColorBuilder(
+      builder: (lightDynamic, darkDynamic) {
+        return MaterialApp(
+          title: 'Habitudes',
+          theme: AppTheme.light(colorScheme: lightDynamic),
+          darkTheme: AppTheme.dark(colorScheme: darkDynamic),
+          themeMode: ThemeMode.system,
+          home: const Placeholder(),
+        );
+      },
     );
   }
 }
