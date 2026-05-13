@@ -19,7 +19,7 @@ void main() {
     setUp(() async {
       repository = FakeHabitRepository();
       viewModel = HabitListViewModel(habitRepository: repository);
-      await viewModel.load();
+      await viewModel.load.execute();
     });
 
     testWidgets('shows empty state when no habits', (tester) async {
@@ -31,7 +31,7 @@ void main() {
     testWidgets('renders habit names from ViewModel', (tester) async {
       await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
       await repository.saveHabit(Habit(id: 'h2', name: 'Walk', createdAt: DateTime.utc(2026, 5, 6)));
-      await viewModel.load();
+      await viewModel.load.execute();
       await tester.pumpWidget(buildTestWidget());
 
       expect(find.text('Read'), findsOneWidget);

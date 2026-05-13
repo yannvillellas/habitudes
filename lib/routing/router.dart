@@ -13,7 +13,8 @@ GoRouter appRouter() {
         path: '/',
         builder: (context, state) {
           final repository = context.read<HabitRepository>();
-          final viewModel = HabitListViewModel(habitRepository: repository)..load();
+          final viewModel = HabitListViewModel(habitRepository: repository);
+          viewModel.load.execute();
           return HabitListScreen(viewModel: viewModel);
         },
       ),

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../view_models/habit_list_viewmodel.dart';
@@ -24,17 +22,20 @@ class HabitListScreen extends StatelessWidget {
         child: const Icon(Icons.add),
       ),
       body: ListenableBuilder(
-        listenable: viewModel,
+        listenable: Listenable.merge([viewModel, viewModel.load]),
         builder: (context, _) {
-          if (viewModel.isLoading) {
+          if (viewModel.load.running) {
             return const Center(child: CircularProgressIndicator());
+          }
+          if (viewModel.load.error) {
+            return const Center(child: Text('Failed to load habits'));
           }
           if (viewModel.habits.isEmpty) {
             return const Center(child: Text('No habits yet'));
           }
 
           return RefreshIndicator(
-            onRefresh: () => viewModel.load(),
+            onRefresh: () => viewModel.load.execute(),
             child: ListView.builder(
               itemCount: viewModel.habits.length,
               itemBuilder: (context, index) {
@@ -69,7 +70,7 @@ class _CreateSheetContentState extends State<_CreateSheetContent> {
 
   void _saveHabit() {
     Navigator.of(context).pop();
-    unawaited(widget.viewModel.addHabit(_controller.text));
+    widget.viewModel.addHabit.execute(_controller.text);
   }
 
   @override
@@ -89,9 +90,11 @@ class _CreateSheetContentState extends State<_CreateSheetContent> {
               children: [
                 const Spacer(),
                 ListenableBuilder(
-                  listenable: _controller,
+                  listenable: Listenable.merge([_controller, widget.viewModel.addHabit]),
                   builder: (_, _) => TextButton(
-                    onPressed: widget.viewModel.canSaveHabit(_controller.text) ? _saveHabit : null,
+                    onPressed: widget.viewModel.addHabit.running || !widget.viewModel.canSaveHabit(_controller.text)
+                        ? null
+                        : _saveHabit,
                     child: const Text('Save'),
                   ),
                 ),

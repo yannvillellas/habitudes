@@ -14,7 +14,7 @@ void main() {
     setUp(() async {
       repository = FakeHabitRepository();
       viewModel = HabitListViewModel(habitRepository: repository);
-      await viewModel.load();
+      await viewModel.load.execute();
     });
 
     test('loads empty habits on creation', () {
@@ -25,7 +25,7 @@ void main() {
       await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
       await repository.saveHabit(Habit(id: 'h2', name: 'Walk', createdAt: DateTime.utc(2026, 5, 6)));
 
-      await viewModel.load();
+      await viewModel.load.execute();
 
       expect(viewModel.habits, hasLength(2));
       expect(viewModel.habits.first.id, 'h1');
@@ -34,17 +34,17 @@ void main() {
 
     test('load picks up new habits added to repository', () async {
       await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
-      await viewModel.load();
+      await viewModel.load.execute();
       expect(viewModel.habits, hasLength(1));
 
       await repository.saveHabit(Habit(id: 'h2', name: 'Walk', createdAt: DateTime.utc(2026, 5, 6)));
-      await viewModel.load();
+      await viewModel.load.execute();
 
       expect(viewModel.habits, hasLength(2));
     });
 
     test('addHabit saves habit and reloads state', () async {
-      await viewModel.addHabit('Read');
+      await viewModel.addHabit.execute('Read');
 
       final result = await repository.listHabits();
       final habits = (result as Ok<List<Habit>>).value;
@@ -55,7 +55,7 @@ void main() {
     });
 
     test('addHabit ignores empty input', () async {
-      await viewModel.addHabit('   ');
+      await viewModel.addHabit.execute('   ');
 
       final result = await repository.listHabits();
       final habits = (result as Ok<List<Habit>>).value;
