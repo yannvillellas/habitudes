@@ -41,5 +41,32 @@ void main() {
 
       expect(viewModel.habits, hasLength(2));
     });
+
+    test('addHabit saves habit and reloads state', () async {
+      await viewModel.addHabit('Read');
+
+      final habits = await repository.listHabits();
+      expect(habits, hasLength(1));
+      expect(habits.single.name, 'Read');
+      expect(habits.single.createdAt.isUtc, isTrue);
+      expect(viewModel.habits, hasLength(1));
+    });
+
+    test('addHabit ignores empty input', () async {
+      await viewModel.addHabit('   ');
+
+      final habits = await repository.listHabits();
+      expect(habits, isEmpty);
+    });
+
+    test('canSaveHabit rejects empty and whitespace', () {
+      expect(viewModel.canSaveHabit(''), isFalse);
+      expect(viewModel.canSaveHabit('   '), isFalse);
+    });
+
+    test('canSaveHabit accepts non-empty text', () {
+      expect(viewModel.canSaveHabit('Read'), isTrue);
+      expect(viewModel.canSaveHabit('  Read  '), isTrue);
+    });
   });
 }

@@ -37,5 +37,54 @@ void main() {
       expect(find.text('Read'), findsOneWidget);
       expect(find.text('Walk'), findsOneWidget);
     });
+
+    group('create habit sheet', () {
+      testWidgets('FAB opens bottom sheet', (tester) async {
+        await tester.pumpWidget(buildTestWidget());
+
+        await tester.tap(find.byIcon(Icons.add));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(TextField), findsOneWidget);
+        expect(find.text('Save'), findsOneWidget);
+      });
+
+      testWidgets('Save button is disabled when text is empty', (tester) async {
+        await tester.pumpWidget(buildTestWidget());
+        await tester.tap(find.byIcon(Icons.add));
+        await tester.pumpAndSettle();
+
+        final saveButton = tester.widget<TextButton>(find.widgetWithText(TextButton, 'Save'));
+        expect(saveButton.onPressed, isNull);
+      });
+
+      testWidgets('Save button is enabled when text is non-empty', (tester) async {
+        await tester.pumpWidget(buildTestWidget());
+        await tester.tap(find.byIcon(Icons.add));
+        await tester.pumpAndSettle();
+
+        await tester.enterText(find.byType(TextField), 'Read');
+        await tester.pump();
+
+        final saveButton = tester.widget<TextButton>(find.widgetWithText(TextButton, 'Save'));
+        expect(saveButton.onPressed, isNotNull);
+      });
+
+      testWidgets('tapping Save dismisses sheet and saves habit', (tester) async {
+        await tester.pumpWidget(buildTestWidget());
+        await tester.tap(find.byIcon(Icons.add));
+        await tester.pumpAndSettle();
+
+        await tester.enterText(find.byType(TextField), 'Read');
+        await tester.pump();
+        await tester.tap(find.text('Save'));
+        await tester.pumpAndSettle();
+
+        // Sheet is dismissed
+        expect(find.byType(TextField), findsNothing);
+        // Habit was saved — appears in the list
+        expect(find.text('Read'), findsOneWidget);
+      });
+    });
   });
 }
