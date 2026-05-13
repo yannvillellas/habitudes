@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/ui/error_indicator.dart';
 import '../view_models/habit_list_viewmodel.dart';
 
 class HabitListScreen extends StatelessWidget {
@@ -28,7 +29,11 @@ class HabitListScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (viewModel.load.error) {
-            return const Center(child: Text('Failed to load habits'));
+            return ErrorIndicator(
+              title: 'Failed to load habits',
+              label: 'Try again',
+              onPressed: () => viewModel.load.execute(),
+            );
           }
           if (viewModel.habits.isEmpty) {
             return const Center(child: Text('No habits yet'));
@@ -68,9 +73,12 @@ class _CreateSheetContentState extends State<_CreateSheetContent> {
     super.dispose();
   }
 
-  void _saveHabit() {
-    Navigator.of(context).pop();
-    widget.viewModel.addHabit.execute(_controller.text);
+  Future<void> _saveHabit() async {
+    await widget.viewModel.addHabit.execute(_controller.text);
+    if (!mounted) return;
+    if (!widget.viewModel.addHabit.error) {
+      Navigator.of(context).pop();
+    }
   }
 
   @override
@@ -86,19 +94,21 @@ class _CreateSheetContentState extends State<_CreateSheetContent> {
               controller: _controller,
               decoration: const InputDecoration(hintText: 'New habit', border: InputBorder.none),
             ),
-            Row(
-              children: [
-                const Spacer(),
-                ListenableBuilder(
-                  listenable: Listenable.merge([_controller, widget.viewModel.addHabit]),
-                  builder: (_, _) => TextButton(
+            ListenableBuilder(
+              listenable: Listenable.merge([_controller, widget.viewModel.addHabit]),
+              builder: (_, _) => Row(
+                children: [
+                  const Spacer(),
+                  TextButton(
                     onPressed: widget.viewModel.addHabit.running || !widget.viewModel.canSaveHabit(_controller.text)
                         ? null
-                        : _saveHabit,
+                        : () {
+                            _saveHabit();
+                          },
                     child: const Text('Save'),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),

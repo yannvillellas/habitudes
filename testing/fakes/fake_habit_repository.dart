@@ -8,6 +8,8 @@ class FakeHabitRepository implements HabitRepository {
   final List<String> _habitOrder = <String>[];
   final Map<String, List<HabitCompletion>> _completions = <String, List<HabitCompletion>>{};
 
+  Exception? listHabitsError;
+
   @override
   Future<Result<void>> saveHabit(Habit habit) async {
     if (!_habits.containsKey(habit.id)) {
@@ -20,6 +22,12 @@ class FakeHabitRepository implements HabitRepository {
 
   @override
   Future<Result<List<Habit>>> listHabits() async {
+    final error = listHabitsError;
+    if (error != null) {
+      listHabitsError = null;
+      return Result.error(error);
+    }
+
     final habits = [for (final habitId in _habitOrder) _habits[habitId]!];
 
     return Result.ok(habits.toList(growable: false));

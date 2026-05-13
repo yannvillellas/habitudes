@@ -28,6 +28,16 @@ void main() {
       expect(find.text('No habits yet'), findsOneWidget);
     });
 
+    testWidgets('shows error with retry button on load failure', (tester) async {
+      repository.listHabitsError = Exception('test error');
+      viewModel = HabitListViewModel(habitRepository: repository);
+      await viewModel.load.execute();
+      await tester.pumpWidget(buildTestWidget());
+
+      expect(find.text('Failed to load habits'), findsOneWidget);
+      expect(find.text('Try again'), findsOneWidget);
+    });
+
     testWidgets('renders habit names from ViewModel', (tester) async {
       await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
       await repository.saveHabit(Habit(id: 'h2', name: 'Walk', createdAt: DateTime.utc(2026, 5, 6)));
