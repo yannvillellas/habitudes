@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 
 import '../../domain/models/habit.dart';
 import '../../domain/models/habit_completion.dart';
+import '../../domain/models/result.dart';
 import '../repositories/habit_repository.dart';
 import '../services/database_service.dart';
 
@@ -30,34 +31,42 @@ class HabitRepositorySqflite implements HabitRepository {
   }
 
   @override
-  Future<void> saveHabit(Habit habit) async {
-    final existing = await _service.query('habits', where: 'id = ?', whereArgs: [habit.id]);
+  Future<Result<void>> saveHabit(Habit habit) async {
+    try {
+      final existing = await _service.query('habits', where: 'id = ?', whereArgs: [habit.id]);
 
-    if (existing.isEmpty) {
-      final maxOrder = await _service.query('habits', orderBy: 'sort_order DESC');
-      final nextOrder = maxOrder.isEmpty ? 0 : (maxOrder.first['sort_order'] as int) + 1;
+      if (existing.isEmpty) {
+        final maxOrder = await _service.query('habits', orderBy: 'sort_order DESC');
+        final nextOrder = maxOrder.isEmpty ? 0 : (maxOrder.first['sort_order'] as int) + 1;
 
-      await _service.insert('habits', {
-        'id': habit.id,
-        'name': habit.name,
-        'created_at': habit.createdAt.millisecondsSinceEpoch,
-        'sort_order': nextOrder,
-      });
-    } else {
-      await _service.update(
-        'habits',
-        {'name': habit.name, 'created_at': habit.createdAt.millisecondsSinceEpoch},
-        where: 'id = ?',
-        whereArgs: [habit.id],
-      );
+        await _service.insert('habits', {
+          'id': habit.id,
+          'name': habit.name,
+          'created_at': habit.createdAt.millisecondsSinceEpoch,
+          'sort_order': nextOrder,
+        });
+      } else {
+        await _service.update(
+          'habits',
+          {'name': habit.name, 'created_at': habit.createdAt.millisecondsSinceEpoch},
+          where: 'id = ?',
+          whereArgs: [habit.id],
+        );
+      }
+      return const Result.ok(null);
+    } on Exception catch (e) {
+      return Result.error(e);
     }
   }
 
   @override
-  Future<List<Habit>> listHabits() async {
-    final rows = await _service.query('habits', orderBy: 'sort_order ASC');
-
-    return rows.map(_rowToHabit).toList(growable: false);
+  Future<Result<List<Habit>>> listHabits() async {
+    try {
+      final rows = await _service.query('habits', orderBy: 'sort_order ASC');
+      return Result.ok(rows.map(_rowToHabit).toList(growable: false));
+    } on Exception catch (e) {
+      return Result.error(e);
+    }
   }
 
   @override

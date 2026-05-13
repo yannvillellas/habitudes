@@ -1,6 +1,7 @@
 import 'package:habitudes/data/repositories/habit_repository.dart';
 import 'package:habitudes/domain/models/habit.dart';
 import 'package:habitudes/domain/models/habit_completion.dart';
+import 'package:habitudes/domain/models/result.dart';
 
 class FakeHabitRepository implements HabitRepository {
   final Map<String, Habit> _habits = <String, Habit>{};
@@ -8,19 +9,20 @@ class FakeHabitRepository implements HabitRepository {
   final Map<String, List<HabitCompletion>> _completions = <String, List<HabitCompletion>>{};
 
   @override
-  Future<void> saveHabit(Habit habit) async {
+  Future<Result<void>> saveHabit(Habit habit) async {
     if (!_habits.containsKey(habit.id)) {
       _habitOrder.add(habit.id);
     }
 
     _habits[habit.id] = habit;
+    return const Result.ok(null);
   }
 
   @override
-  Future<List<Habit>> listHabits() async {
+  Future<Result<List<Habit>>> listHabits() async {
     final habits = [for (final habitId in _habitOrder) _habits[habitId]!];
 
-    return habits.toList(growable: false);
+    return Result.ok(habits.toList(growable: false));
   }
 
   @override

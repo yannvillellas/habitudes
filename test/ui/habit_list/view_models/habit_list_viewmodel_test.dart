@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:habitudes/domain/models/habit.dart';
+import 'package:habitudes/domain/models/result.dart';
 import 'package:habitudes/ui/habit_list/view_models/habit_list_viewmodel.dart';
 
 import '../../../../testing/fakes/fake_habit_repository.dart';
@@ -45,7 +46,8 @@ void main() {
     test('addHabit saves habit and reloads state', () async {
       await viewModel.addHabit('Read');
 
-      final habits = await repository.listHabits();
+      final result = await repository.listHabits();
+      final habits = (result as Ok<List<Habit>>).value;
       expect(habits, hasLength(1));
       expect(habits.single.name, 'Read');
       expect(habits.single.createdAt.isUtc, isTrue);
@@ -55,7 +57,8 @@ void main() {
     test('addHabit ignores empty input', () async {
       await viewModel.addHabit('   ');
 
-      final habits = await repository.listHabits();
+      final result = await repository.listHabits();
+      final habits = (result as Ok<List<Habit>>).value;
       expect(habits, isEmpty);
     });
 
