@@ -1,7 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../data/repositories/habit_repository.dart';
+import '../ui/create_habit/view_models/create_habit_viewmodel.dart';
+import '../ui/create_habit/widgets/create_habit_screen.dart';
 import '../ui/habit_list/view_models/habit_list_viewmodel.dart';
 import '../ui/habit_list/widgets/habit_list_screen.dart';
 
@@ -14,8 +17,20 @@ GoRouter appRouter() {
         builder: (context, state) {
           final repository = context.read<HabitRepository>();
           final viewModel = HabitListViewModel(habitRepository: repository);
-          viewModel.load.execute();
-          return HabitListScreen(viewModel: viewModel);
+          return HabitListScreen(
+            viewModel: viewModel,
+            onAddHabit: (sheetContext) {
+              final createViewModel = CreateHabitViewModel(
+                habitRepository: repository,
+                onSaved: () => viewModel.load.execute(),
+              );
+              showModalBottomSheet(
+                context: sheetContext,
+                isScrollControlled: true,
+                builder: (_) => CreateHabitScreen(viewModel: createViewModel),
+              );
+            },
+          );
         },
       ),
     ],
