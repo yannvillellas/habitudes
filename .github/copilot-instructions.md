@@ -165,7 +165,12 @@ testing/                  # Root-level: fakes, mocks (a "version of your app you
 - Integration test: critical flows.
 - Use fakes (not mocks) where possible — implement the same interface with in-memory storage.
 - Fakes live in `testing/fakes/` at project root.
-- `test/` directory mirrors `lib/` structure.
+- `test/` directory mirrors `lib/` structure as a guideline. A root-level smoke test for `main.dart` is acceptable.
+- **Import style** (follows the [Compass app](https://github.com/flutter/samples/tree/main/compass_app) pattern and [Effective Dart](https://dart.dev/effective-dart/style)):
+  - `test/` → `lib/`: use `package:` imports (required by `avoid_relative_lib_imports` lint).
+  - `test/` → `testing/`: use relative imports (e.g. `../../testing/fakes/fake_habit_repository.dart`).
+  - `testing/` → `lib/`: use `package:` imports.
+  - Within `lib/`: use relative imports.
 - ViewModel tests: inject `Fake*Repository`. Only fakes needed — no Flutter framework.
 - View widget tests: create real ViewModel with fake repositories, use `pumpWidget` with providers.
 - Data layer tests: inject fake services into repositories, or use in-memory SQLite via `sqflite_common_ffi`.
