@@ -7,25 +7,34 @@ import '../repositories/habit_repository.dart';
 import '../services/database_service.dart';
 
 class HabitRepositorySqflite implements HabitRepository {
+  static const _habitsTable = 'habits';
+  static const _completionsTable = 'habit_completions';
+  static const _idColumn = 'id';
+  static const _nameColumn = 'name';
+  static const _createdAtColumn = 'created_at';
+  static const _sortOrderColumn = 'sort_order';
+  static const _habitIdColumn = 'habit_id';
+  static const _dateColumn = 'date';
+
   final DatabaseService _service;
 
   HabitRepositorySqflite({required DatabaseService service}) : _service = service;
 
   static Future<void> createTables(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE habits(
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        created_at INTEGER NOT NULL,
-        sort_order INTEGER NOT NULL
+      CREATE TABLE $_habitsTable(
+        $_idColumn TEXT PRIMARY KEY,
+        $_nameColumn TEXT NOT NULL,
+        $_createdAtColumn INTEGER NOT NULL,
+        $_sortOrderColumn INTEGER NOT NULL
       )
     ''');
 
     await db.execute('''
-      CREATE TABLE habit_completions(
-        habit_id TEXT NOT NULL,
-        date TEXT NOT NULL,
-        PRIMARY KEY (habit_id, date)
+      CREATE TABLE $_completionsTable(
+        $_habitIdColumn TEXT NOT NULL,
+        $_dateColumn TEXT NOT NULL,
+        PRIMARY KEY ($_habitIdColumn, $_dateColumn)
       )
     ''');
   }
@@ -33,23 +42,23 @@ class HabitRepositorySqflite implements HabitRepository {
   @override
   Future<Result<void>> saveHabit(Habit habit) async {
     try {
-      final existing = await _service.query('habits', where: 'id = ?', whereArgs: [habit.id]);
+      final existing = await _service.query(_habitsTable, where: '$_idColumn = ?', whereArgs: [habit.id]);
 
       if (existing.isEmpty) {
-        final maxOrder = await _service.query('habits', orderBy: 'sort_order DESC');
-        final nextOrder = maxOrder.isEmpty ? 0 : (maxOrder.first['sort_order'] as int) + 1;
+        final maxOrder = await _service.query(_habitsTable, orderBy: '$_sortOrderColumn DESC');
+        final nextOrder = maxOrder.isEmpty ? 0 : (maxOrder.first[_sortOrderColumn] as int) + 1;
 
-        await _service.insert('habits', {
-          'id': habit.id,
-          'name': habit.name,
-          'created_at': habit.createdAt.millisecondsSinceEpoch,
-          'sort_order': nextOrder,
+        await _service.insert(_habitsTable, {
+          _idColumn: habit.id,
+          _nameColumn: habit.name,
+          _createdAtColumn: habit.createdAt.millisecondsSinceEpoch,
+          _sortOrderColumn: nextOrder,
         });
       } else {
         await _service.update(
-          'habits',
-          {'name': habit.name, 'created_at': habit.createdAt.millisecondsSinceEpoch},
-          where: 'id = ?',
+          _habitsTable,
+          {_nameColumn: habit.name, _createdAtColumn: habit.createdAt.millisecondsSinceEpoch},
+          where: '$_idColumn = ?',
           whereArgs: [habit.id],
         );
       }
@@ -62,7 +71,7 @@ class HabitRepositorySqflite implements HabitRepository {
   @override
   Future<Result<List<Habit>>> listHabits() async {
     try {
-      final rows = await _service.query('habits', orderBy: 'sort_order ASC');
+      final rows = await _service.query(_habitsTable, orderBy: '$_sortOrderColumn ASC');
       return Result.ok(rows.map(_rowToHabit).toList(growable: false));
     } on Exception catch (e) {
       return Result.error(e);
@@ -73,7 +82,7 @@ class HabitRepositorySqflite implements HabitRepository {
   Future<Result<void>> recordCompletion(HabitCompletion completion) async {
     final date = _dateToText(completion.date);
     try {
-      await _service.insert('habit_completions', {'habit_id': completion.habitId, 'date': date});
+      await _service.insert(_completionsTable, {_habitIdColumn: completion.habitId, _dateColumn: date});
       return const Result.ok(null);
     } on Exception catch (e) {
       return Result.error(e);
@@ -84,8 +93,8 @@ class HabitRepositorySqflite implements HabitRepository {
   Future<Result<void>> deleteCompletion(String habitId, DateTime date) async {
     try {
       await _service.delete(
-        'habit_completions',
-        where: 'habit_id = ? AND date = ?',
+        _completionsTable,
+        where: '$_habitIdColumn = ? AND $_dateColumn = ?',
         whereArgs: [habitId, _dateToText(date)],
       );
       return const Result.ok(null);
@@ -98,10 +107,10 @@ class HabitRepositorySqflite implements HabitRepository {
   Future<Result<List<HabitCompletion>>> listCompletions(String habitId) async {
     try {
       final rows = await _service.query(
-        'habit_completions',
-        where: 'habit_id = ?',
+        _completionsTable,
+        where: '$_habitIdColumn = ?',
         whereArgs: [habitId],
-        orderBy: 'date ASC',
+        orderBy: '$_dateColumn ASC',
       );
       return Result.ok(rows.map(_rowToCompletion).toList(growable: false));
     } on Exception catch (e) {
@@ -111,14 +120,14 @@ class HabitRepositorySqflite implements HabitRepository {
 
   Habit _rowToHabit(Map<String, Object?> row) {
     return Habit(
-      id: row['id']! as String,
-      name: row['name']! as String,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(row['created_at']! as int, isUtc: true),
+      id: row[_idColumn]! as String,
+      name: row[_nameColumn]! as String,
+      createdAt: DateTime.fromMillisecondsSinceEpoch(row[_createdAtColumn]! as int, isUtc: true),
     );
   }
 
   HabitCompletion _rowToCompletion(Map<String, Object?> row) {
-    return HabitCompletion(habitId: row['habit_id']! as String, date: _dateFromText(row['date']! as String));
+    return HabitCompletion(habitId: row[_habitIdColumn]! as String, date: _dateFromText(row[_dateColumn]! as String));
   }
 
   static String _dateToText(DateTime date) {
