@@ -5,11 +5,6 @@ import 'package:habitudes/domain/models/habit.dart';
 import 'package:habitudes/domain/models/habit_completion.dart';
 import 'package:habitudes/domain/models/result.dart';
 
-Future<List<Habit>> _unwrapList(Future<Result<List<Habit>>> future) async {
-  final result = await future;
-  return (result as Ok<List<Habit>>).value;
-}
-
 void runHabitRepositoryContract(Future<HabitRepository> Function() createRepository) {
   late HabitRepository repository;
 
@@ -24,7 +19,7 @@ void runHabitRepositoryContract(Future<HabitRepository> Function() createReposit
     await repository.saveHabit(initialHabit);
     await repository.saveHabit(updatedHabit);
 
-    final habits = await _unwrapList(repository.listHabits());
+    final habits = (await repository.listHabits() as Ok<List<Habit>>).value;
 
     expect(habits, hasLength(1));
     expect(habits.single.id, updatedHabit.id);
@@ -37,7 +32,7 @@ void runHabitRepositoryContract(Future<HabitRepository> Function() createReposit
     await repository.saveHabit(Habit(id: 'habit-2', name: 'Walk', createdAt: DateTime.utc(2026, 5, 6)));
     await repository.saveHabit(Habit(id: 'habit-3', name: 'Meditate', createdAt: DateTime.utc(2026, 5, 6)));
 
-    final habits = await _unwrapList(repository.listHabits());
+    final habits = (await repository.listHabits() as Ok<List<Habit>>).value;
 
     expect(habits.map((habit) => habit.id), <String>['habit-1', 'habit-2', 'habit-3']);
   });
