@@ -53,11 +53,25 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/upload-keystore.jks
+      - name: Write key.properties
+        run: |
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=upload" >> android/key.properties
+          echo "storeFile=upload-keystore.jks" >> android/key.properties
       - name: Install dependencies
         run: flutter pub get
       - name: Build release APK
@@ -68,10 +82,46 @@ jobs:
           name: habitudes-android-apk-${{ github.run_number }}-${{ github.sha }}
           path: build/app/outputs/flutter-apk/app-release.apk
 
-  release_android_apk:
+  build_android_aab:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push'
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/upload-keystore.jks
+      - name: Write key.properties
+        run: |
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=upload" >> android/key.properties
+          echo "storeFile=upload-keystore.jks" >> android/key.properties
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build release AAB
+        run: flutter build appbundle --release
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: habitudes-android-aab-${{ github.run_number }}-${{ github.sha }}
+          path: build/app/outputs/bundle/release/app-release.aab
+
+  release_android:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    needs: build_android_apk
+    needs: [build_android_apk, build_android_aab]
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -82,6 +132,11 @@ jobs:
         with:
           name: habitudes-android-apk-${{ github.run_number }}-${{ github.sha }}
           path: build/app/outputs/flutter-apk
+      - name: Download AAB artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: habitudes-android-aab-${{ github.run_number }}-${{ github.sha }}
+          path: build/app/outputs/bundle/release
       - name: Read version from pubspec
         id: pubspec
         run: |
@@ -99,9 +154,39 @@ jobs:
         run: |
           git tag "${{ steps.pubspec.outputs.tag }}"
           git push origin "${{ steps.pubspec.outputs.tag }}"
-      - name: Upload APK to GitHub Release
+      - name: Upload APK + AAB to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.pubspec.outputs.tag }}
           name: Release ${{ steps.pubspec.outputs.tag }}
-          files: build/app/outputs/flutter-apk/app-release.apk
+          files: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
+          generate_release_notes: true
+
+  publish_play_store:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    needs: build_android_aab
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Download AAB artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: habitudes-android-aab-${{ github.run_number }}-${{ github.sha }}
+          path: build/app/outputs/bundle/release
+      - name: Read version from pubspec
+        id: pubspec
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Publish to Play Store internal track
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT }}
+          packageName: app.yann.habitudes
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          track: internal
+          releaseName: v${{ steps.pubspec.outputs.version }}
+          status: completed
