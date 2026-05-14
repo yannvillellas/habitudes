@@ -1,11 +1,10 @@
 import 'package:flutter/foundation.dart';
-
 import 'package:uuid/uuid.dart';
 
-import 'package:habitudes/data/repositories/habit_repository.dart';
-import 'package:habitudes/domain/models/habit.dart';
-import 'package:habitudes/domain/models/result.dart';
-import 'package:habitudes/utils/command.dart';
+import '../../../data/repositories/habit_repository.dart';
+import '../../../domain/models/habit.dart';
+import '../../../domain/models/result.dart';
+import '../../../utils/command.dart';
 
 class CreateHabitViewModel extends ChangeNotifier {
   static const _uuid = Uuid();

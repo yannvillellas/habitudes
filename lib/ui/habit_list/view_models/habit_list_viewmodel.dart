@@ -2,10 +2,10 @@ import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
 
-import 'package:habitudes/data/repositories/habit_repository.dart';
-import 'package:habitudes/domain/models/habit.dart';
-import 'package:habitudes/domain/models/result.dart';
-import 'package:habitudes/utils/command.dart';
+import '../../../data/repositories/habit_repository.dart';
+import '../../../domain/models/habit.dart';
+import '../../../domain/models/result.dart';
+import '../../../utils/command.dart';
 
 class HabitListViewModel extends ChangeNotifier {
   final HabitRepository _habitRepository;

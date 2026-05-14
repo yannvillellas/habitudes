@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import 'package:habitudes/domain/models/result.dart';
+import '../domain/models/result.dart';
 
 /// A [Command] wraps an async operation and exposes its lifecycle state:
 /// [running], [error], and [completed].
