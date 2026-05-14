@@ -47,7 +47,7 @@ void runHabitRepositoryContract(Future<HabitRepository> Function() createReposit
     await repository.recordCompletion(HabitCompletion(habitId: 'habit-1', date: DateTime(2026, 5, 6, 23, 59)));
     await repository.recordCompletion(HabitCompletion(habitId: 'habit-1', date: DateTime(2026, 5, 7, 8, 0)));
 
-    final completions = await repository.listCompletions('habit-1');
+    final completions = (await repository.listCompletions('habit-1') as Ok<List<HabitCompletion>>).value;
 
     expect(completions, hasLength(2));
     expect(completions.first.date, DateTime.utc(2026, 5, 6));
@@ -58,8 +58,8 @@ void runHabitRepositoryContract(Future<HabitRepository> Function() createReposit
     await repository.recordCompletion(HabitCompletion(habitId: 'habit-1', date: DateTime(2026, 5, 6)));
     await repository.recordCompletion(HabitCompletion(habitId: 'habit-2', date: DateTime(2026, 5, 7)));
 
-    final habit1Completions = await repository.listCompletions('habit-1');
-    final habit2Completions = await repository.listCompletions('habit-2');
+    final habit1Completions = (await repository.listCompletions('habit-1') as Ok<List<HabitCompletion>>).value;
+    final habit2Completions = (await repository.listCompletions('habit-2') as Ok<List<HabitCompletion>>).value;
 
     expect(habit1Completions, hasLength(1));
     expect(habit2Completions, hasLength(1));
@@ -74,14 +74,14 @@ void runHabitRepositoryContract(Future<HabitRepository> Function() createReposit
     await repository.deleteCompletion('habit-1', DateTime(2026, 5, 6, 0, 0));
     await repository.deleteCompletion('habit-1', DateTime(2026, 5, 9, 0, 0));
 
-    final completions = await repository.listCompletions('habit-1');
+    final completions = (await repository.listCompletions('habit-1') as Ok<List<HabitCompletion>>).value;
 
     expect(completions, hasLength(1));
     expect(completions.single.date, DateTime.utc(2026, 5, 7));
   });
 
   test('returns empty completions for unknown habits', () async {
-    final completions = await repository.listCompletions('missing-habit');
+    final completions = (await repository.listCompletions('missing-habit') as Ok<List<HabitCompletion>>).value;
 
     expect(completions, isEmpty);
   });

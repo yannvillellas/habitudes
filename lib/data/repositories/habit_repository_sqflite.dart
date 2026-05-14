@@ -70,34 +70,43 @@ class HabitRepositorySqflite implements HabitRepository {
   }
 
   @override
-  Future<void> recordCompletion(HabitCompletion completion) async {
+  Future<Result<void>> recordCompletion(HabitCompletion completion) async {
     final date = _dateToText(completion.date);
     try {
       await _service.insert('habit_completions', {'habit_id': completion.habitId, 'date': date});
-    } catch (_) {
-      // Ignore duplicate (habit_id, date) constraint violations
+      return const Result.ok(null);
+    } on Exception catch (e) {
+      return Result.error(e);
     }
   }
 
   @override
-  Future<void> deleteCompletion(String habitId, DateTime date) async {
-    await _service.delete(
-      'habit_completions',
-      where: 'habit_id = ? AND date = ?',
-      whereArgs: [habitId, _dateToText(date)],
-    );
+  Future<Result<void>> deleteCompletion(String habitId, DateTime date) async {
+    try {
+      await _service.delete(
+        'habit_completions',
+        where: 'habit_id = ? AND date = ?',
+        whereArgs: [habitId, _dateToText(date)],
+      );
+      return const Result.ok(null);
+    } on Exception catch (e) {
+      return Result.error(e);
+    }
   }
 
   @override
-  Future<List<HabitCompletion>> listCompletions(String habitId) async {
-    final rows = await _service.query(
-      'habit_completions',
-      where: 'habit_id = ?',
-      whereArgs: [habitId],
-      orderBy: 'date ASC',
-    );
-
-    return rows.map(_rowToCompletion).toList(growable: false);
+  Future<Result<List<HabitCompletion>>> listCompletions(String habitId) async {
+    try {
+      final rows = await _service.query(
+        'habit_completions',
+        where: 'habit_id = ?',
+        whereArgs: [habitId],
+        orderBy: 'date ASC',
+      );
+      return Result.ok(rows.map(_rowToCompletion).toList(growable: false));
+    } on Exception catch (e) {
+      return Result.error(e);
+    }
   }
 
   Habit _rowToHabit(Map<String, Object?> row) {
