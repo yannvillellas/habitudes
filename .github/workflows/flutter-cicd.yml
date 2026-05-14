@@ -12,6 +12,23 @@ permissions:
   contents: write
 
 jobs:
+  check_version_bump:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check version was bumped vs base branch
+        run: |
+          PR_VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}')
+          BASE_VERSION=$(git show "origin/${{ github.base_ref }}:pubspec.yaml" | grep '^version:' | awk '{print $2}')
+          if [ "$PR_VERSION" = "$BASE_VERSION" ]; then
+            echo "::error::pubspec.yaml version ($PR_VERSION) was not bumped. Please update it before merging."
+            exit 1
+          fi
+          echo "Base: $BASE_VERSION → PR: $PR_VERSION ✓"
+
   test:
     runs-on: ubuntu-latest
     steps:
