@@ -5,18 +5,15 @@ import '../view_models/habit_list_viewmodel.dart';
 
 class HabitListScreen extends StatelessWidget {
   final HabitListViewModel viewModel;
-  final void Function(BuildContext context)? onAddHabit;
+  final void Function(BuildContext context) onAddHabit;
 
-  const HabitListScreen({super.key, required this.viewModel, this.onAddHabit});
+  const HabitListScreen({super.key, required this.viewModel, required this.onAddHabit});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Habitudes')),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => onAddHabit?.call(context),
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: FloatingActionButton(onPressed: () => onAddHabit(context), child: const Icon(Icons.add)),
       body: ListenableBuilder(
         listenable: Listenable.merge([viewModel, viewModel.load]),
         builder: (context, _) {
