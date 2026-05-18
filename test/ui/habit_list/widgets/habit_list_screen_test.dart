@@ -13,6 +13,7 @@ Widget buildTestWidget(HabitListViewModel viewModel, FakeHabitRepository reposit
   return MaterialApp(
     home: HabitListScreen(
       viewModel: viewModel,
+      onTapHabit: (_, _) {},
       onAddHabit: (context) {
         final createViewModel = CreateHabitViewModel(
           habitRepository: repository,

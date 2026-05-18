@@ -5,9 +5,10 @@ import '../view_models/habit_list_viewmodel.dart';
 
 class HabitListScreen extends StatelessWidget {
   final HabitListViewModel viewModel;
+  final void Function(BuildContext context, String habitId) onTapHabit;
   final void Function(BuildContext context) onAddHabit;
 
-  const HabitListScreen({super.key, required this.viewModel, required this.onAddHabit});
+  const HabitListScreen({super.key, required this.viewModel, required this.onTapHabit, required this.onAddHabit});
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +38,11 @@ class HabitListScreen extends StatelessWidget {
               itemCount: viewModel.habits.length,
               itemBuilder: (context, index) {
                 final habit = viewModel.habits[index];
-                return ListTile(leading: Checkbox(value: false, onChanged: null), title: Text(habit.name));
+                return ListTile(
+                  leading: Checkbox(value: false, onChanged: null),
+                  title: Text(habit.name),
+                  onTap: () => onTapHabit(context, habit.id),
+                );
               },
             ),
           );

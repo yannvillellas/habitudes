@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../data/repositories/habit_repository.dart';
 import '../ui/create_habit/view_models/create_habit_viewmodel.dart';
 import '../ui/create_habit/widgets/create_habit_screen.dart';
+import '../ui/habit_detail/view_models/habit_detail_viewmodel.dart';
+import '../ui/habit_detail/widgets/habit_detail_screen.dart';
 import '../ui/habit_list/view_models/habit_list_viewmodel.dart';
 import '../ui/habit_list/widgets/habit_list_screen.dart';
 
@@ -19,6 +21,7 @@ GoRouter appRouter() {
           final viewModel = HabitListViewModel(habitRepository: repository);
           return HabitListScreen(
             viewModel: viewModel,
+            onTapHabit: (_, habitId) => context.push('/habit/$habitId'),
             onAddHabit: (sheetContext) {
               final createViewModel = CreateHabitViewModel(
                 habitRepository: repository,
@@ -31,6 +34,15 @@ GoRouter appRouter() {
               );
             },
           );
+        },
+      ),
+      GoRoute(
+        path: '/habit/:id',
+        builder: (context, state) {
+          final repository = context.read<HabitRepository>();
+          final habitId = state.pathParameters['id']!;
+          final viewModel = HabitDetailViewModel(habitRepository: repository, habitId: habitId);
+          return HabitDetailScreen(viewModel: viewModel, onDeleted: () => context.pop());
         },
       ),
     ],
