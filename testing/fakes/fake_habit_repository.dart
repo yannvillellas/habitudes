@@ -34,6 +34,14 @@ class FakeHabitRepository implements HabitRepository {
   }
 
   @override
+  Future<Result<void>> deleteHabit(String habitId) async {
+    _habits.remove(habitId);
+    _habitOrder.remove(habitId);
+    _completions.remove(habitId);
+    return const Result.ok(null);
+  }
+
+  @override
   Future<Result<void>> recordCompletion(HabitCompletion completion) async {
     final normalizedCompletion = HabitCompletion(habitId: completion.habitId, date: _normalizeDate(completion.date));
     final completions = _completions.putIfAbsent(completion.habitId, () => <HabitCompletion>[]);

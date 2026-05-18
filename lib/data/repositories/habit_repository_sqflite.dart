@@ -79,6 +79,17 @@ class HabitRepositorySqflite implements HabitRepository {
   }
 
   @override
+  Future<Result<void>> deleteHabit(String habitId) async {
+    try {
+      await _service.delete(_completionsTable, where: '$_habitIdColumn = ?', whereArgs: [habitId]);
+      await _service.delete(_habitsTable, where: '$_idColumn = ?', whereArgs: [habitId]);
+      return const Result.ok(null);
+    } on Exception catch (e) {
+      return Result.error(e);
+    }
+  }
+
+  @override
   Future<Result<void>> recordCompletion(HabitCompletion completion) async {
     final date = _dateToText(completion.date);
     try {
