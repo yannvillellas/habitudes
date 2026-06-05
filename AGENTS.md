@@ -22,7 +22,7 @@ Sources: [Architecture guide](https://docs.flutter.dev/app-architecture/guide),
 
 Follow the [Compass app layout](https://github.com/flutter/samples/tree/main/compass_app):
 
-```
+```text
 lib/
   data/                   # Organized by TYPE (repos/services shared across features)
     repositories/
