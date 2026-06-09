@@ -41,7 +41,20 @@ class HabitListScreen extends StatelessWidget {
                 return ListTile(
                   leading: Checkbox(
                     value: viewModel.isCompletedToday(habit.id),
-                    onChanged: (_) => viewModel.toggleCompletion.execute(habit.id),
+                    onChanged: (_) async {
+                      await viewModel.toggleCompletion.execute(habit.id);
+                      if (viewModel.toggleCompletion.error && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Failed to update'),
+                            action: SnackBarAction(
+                              label: 'Retry',
+                              onPressed: () => viewModel.toggleCompletion.execute(habit.id),
+                            ),
+                          ),
+                        );
+                      }
+                    },
                   ),
                   title: Text(habit.name),
                   onTap: () => onTapHabit(context, habit.id),
