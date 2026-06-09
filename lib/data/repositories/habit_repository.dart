@@ -10,4 +10,5 @@ abstract class HabitRepository {
   Future<Result<void>> recordCompletion(HabitCompletion completion);
   Future<Result<void>> deleteCompletion(String habitId, DateTime date);
   Future<Result<List<HabitCompletion>>> listCompletions(String habitId);
+  Future<Result<Set<String>>> getTodayCompletedHabitIds(DateTime date);
 }

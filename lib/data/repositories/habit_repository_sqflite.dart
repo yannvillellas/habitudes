@@ -129,6 +129,20 @@ class HabitRepositorySqflite implements HabitRepository {
     }
   }
 
+  @override
+  Future<Result<Set<String>>> getTodayCompletedHabitIds(DateTime date) async {
+    try {
+      final rows = await _service.query(
+        _completionsTable,
+        where: '$_dateColumn = ?',
+        whereArgs: [_dateToText(date)],
+      );
+      return Result.ok(rows.map((row) => row[_habitIdColumn]! as String).toSet());
+    } on Exception catch (e) {
+      return Result.error(e);
+    }
+  }
+
   Habit _rowToHabit(Map<String, Object?> row) {
     return Habit(
       id: row[_idColumn]! as String,

@@ -75,6 +75,17 @@ class FakeHabitRepository implements HabitRepository {
     return Result.ok(List<HabitCompletion>.unmodifiable(completions));
   }
 
+  @override
+  Future<Result<Set<String>>> getTodayCompletedHabitIds(DateTime date) async {
+    final ids = <String>{};
+    for (final entry in _completions.entries) {
+      if (entry.value.any((c) => _sameDate(c.date, date))) {
+        ids.add(entry.key);
+      }
+    }
+    return Result.ok(ids);
+  }
+
   static DateTime _normalizeDate(DateTime date) {
     return DateTime.utc(date.year, date.month, date.day);
   }
