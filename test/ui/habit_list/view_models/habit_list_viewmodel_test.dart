@@ -40,5 +40,25 @@ void main() {
 
       expect(viewModel.habits, hasLength(2));
     });
+
+    test('load exposes error when repository fails', () async {
+      repository.listHabitsError = Exception('test error');
+
+      await viewModel.load.execute();
+
+      expect(viewModel.load.error, isTrue);
+    });
+
+    test('preserves existing habits on reload failure', () async {
+      await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+      await viewModel.load.execute();
+      expect(viewModel.habits, hasLength(1));
+
+      repository.listHabitsError = Exception('test error');
+      await viewModel.load.execute();
+
+      expect(viewModel.habits, hasLength(1));
+      expect(viewModel.load.error, isTrue);
+    });
   });
 }
