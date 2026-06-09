@@ -1,18 +1,27 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:habitudes/domain/models/habit.dart';
+import 'package:habitudes/domain/models/habit_completion.dart';
+import 'package:habitudes/domain/models/result.dart';
 import 'package:habitudes/ui/habit_list/view_models/habit_list_viewmodel.dart';
 
 import '../../../../testing/fakes/fake_habit_repository.dart';
 
 void main() {
+  final today = DateTime(2026, 6, 9);
+
+  HabitListViewModel createViewModel(FakeHabitRepository repository) {
+    return HabitListViewModel(habitRepository: repository, now: () => today);
+  }
+
   group('HabitListViewModel', () {
     late FakeHabitRepository repository;
     late HabitListViewModel viewModel;
 
     setUp(() async {
       repository = FakeHabitRepository();
-      viewModel = HabitListViewModel(habitRepository: repository);
+      viewModel = createViewModel(repository);
+      await Future<void>.delayed(Duration.zero);
     });
 
     test('loads empty habits on creation', () {
@@ -59,6 +68,61 @@ void main() {
 
       expect(viewModel.habits, hasLength(1));
       expect(viewModel.load.error, isTrue);
+    });
+
+    group('toggleCompletion', () {
+      test('load detects today completions', () async {
+        await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+        await repository.recordCompletion(HabitCompletion(habitId: 'h1', date: today));
+
+        await viewModel.load.execute();
+
+        expect(viewModel.isCompletedToday('h1'), isTrue);
+      });
+
+      test('load sets false for habits without today completion', () async {
+        await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+        await repository.recordCompletion(HabitCompletion(habitId: 'h1', date: DateTime(2026, 6, 8)));
+
+        await viewModel.load.execute();
+
+        expect(viewModel.isCompletedToday('h1'), isFalse);
+      });
+
+      test('records completion when not completed today', () async {
+        await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+        await viewModel.load.execute();
+
+        await viewModel.toggleCompletion.execute('h1');
+
+        expect(viewModel.isCompletedToday('h1'), isTrue);
+        final completions = (await repository.listCompletions('h1') as Ok<List<HabitCompletion>>).value;
+        expect(completions, hasLength(1));
+        expect(completions.single.date, DateTime.utc(2026, 6, 9));
+      });
+
+      test('deletes completion when already completed today', () async {
+        await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+        await repository.recordCompletion(HabitCompletion(habitId: 'h1', date: today));
+        await viewModel.load.execute();
+
+        await viewModel.toggleCompletion.execute('h1');
+
+        expect(viewModel.isCompletedToday('h1'), isFalse);
+        final completions = (await repository.listCompletions('h1') as Ok<List<HabitCompletion>>).value;
+        expect(completions, isEmpty);
+      });
+
+      test('does not affect other habits completions', () async {
+        await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+        await repository.saveHabit(Habit(id: 'h2', name: 'Walk', createdAt: DateTime.utc(2026, 5, 6)));
+        await viewModel.load.execute();
+
+        await viewModel.toggleCompletion.execute('h1');
+
+        expect(viewModel.isCompletedToday('h1'), isTrue);
+        expect(viewModel.isCompletedToday('h2'), isFalse);
+      });
     });
   });
 }
