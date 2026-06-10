@@ -1,6 +1,3 @@
-const _dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+import 'package:intl/intl.dart';
 
-String formatDayOfWeek(DateTime date) {
-  final weekday = date.weekday;
-  return _dayNames[weekday - 1];
-}
+String formatDayOfWeek(DateTime date) => DateFormat.E().format(date);
