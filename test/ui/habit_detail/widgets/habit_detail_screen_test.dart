@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:habitudes/domain/models/habit.dart';
+import 'package:habitudes/domain/models/habit_completion.dart';
 import 'package:habitudes/domain/models/result.dart';
 import 'package:habitudes/ui/habit_detail/view_models/habit_detail_viewmodel.dart';
 import 'package:habitudes/ui/habit_detail/widgets/habit_detail_screen.dart';
@@ -40,28 +41,21 @@ void main() {
       final viewModel = HabitDetailViewModel(habitRepository: repository, habitId: 'h1');
       await tester.pumpWidget(buildTestWidget(viewModel));
 
-      // Open popup menu
       await tester.tap(find.byType(PopupMenuButton<String>));
       await tester.pumpAndSettle();
 
-      // Tap Delete
       await tester.tap(find.text('Delete'));
       await tester.pumpAndSettle();
 
-      // Habit should be removed from repository
       final habits = (await repository.listHabits());
-      // Since it's a Result, we need to get the value
       if (habits case Ok<List<Habit>>(:final value)) {
         expect(value, isEmpty);
       } else {
         fail('Expected Ok result');
       }
 
-      // Screen should be popped — verify by checking the app bar title is not showing habit name
-      // (the screen renders elsewhere after pop, we just verify no "Read" text)
-      // Actually with push/pop in tests, the screen may still be rendered.
-      // Instead, verify the delete command completed.
       expect(viewModel.delete.completed, isTrue);
     });
+
   });
 }

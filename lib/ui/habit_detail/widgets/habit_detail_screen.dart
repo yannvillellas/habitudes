@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../utils/date_formatting.dart';
 import '../view_models/habit_detail_viewmodel.dart';
 
 class HabitDetailScreen extends StatelessWidget {
@@ -34,7 +35,13 @@ class HabitDetailScreen extends StatelessWidget {
         ],
       ),
       body: ListenableBuilder(
-        listenable: Listenable.merge([viewModel.load, viewModel.delete]),
+        listenable: Listenable.merge([
+          viewModel,
+          viewModel.load,
+          viewModel.delete,
+          viewModel.loadCompletions,
+          viewModel.toggleDayCompletion,
+        ]),
         builder: (_, _) {
           if (viewModel.load.running) {
             return const Center(child: CircularProgressIndicator());
@@ -45,7 +52,39 @@ class HabitDetailScreen extends StatelessWidget {
           if (viewModel.delete.running) {
             return const Center(child: CircularProgressIndicator());
           }
-          return const SizedBox.shrink();
+          if (viewModel.loadCompletions.running) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          return Column(
+            children: [
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 100,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: viewModel.last30Days.length,
+                  itemBuilder: (context, index) {
+                    final date = viewModel.last30Days[index];
+                    final dayOfMonth = date.day.toString();
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(formatDayOfWeek(date), style: Theme.of(context).textTheme.bodySmall),
+                          Text(dayOfMonth, style: Theme.of(context).textTheme.bodySmall),
+                          Checkbox(
+                            value: viewModel.isDayCompleted(date),
+                            onChanged: (_) => viewModel.toggleDayCompletion.execute(date),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
         },
       ),
     );
