@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../view_models/create_habit_viewmodel.dart';
 
 class CreateHabitScreen extends StatefulWidget {
@@ -30,6 +31,7 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom + 8, left: 24, right: 24, top: 8),
@@ -39,7 +41,7 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
             TextField(
               autofocus: true,
               controller: _controller,
-              decoration: const InputDecoration(hintText: 'New habit', border: InputBorder.none),
+              decoration: InputDecoration(hintText: l10n.newHabitHint, border: InputBorder.none),
             ),
             ListenableBuilder(
               listenable: Listenable.merge([_controller, widget.viewModel.save]),
@@ -52,7 +54,7 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                         : () {
                             _saveHabit();
                           },
-                    child: const Text('Save'),
+                    child: Text(l10n.save),
                   ),
                 ],
               ),

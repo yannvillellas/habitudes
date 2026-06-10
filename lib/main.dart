@@ -8,6 +8,7 @@ import 'config/theme.dart';
 import 'data/repositories/habit_repository.dart';
 import 'data/repositories/habit_repository_sqflite.dart';
 import 'data/services/database_service.dart';
+import 'l10n/app_localizations.dart';
 import 'routing/router.dart';
 
 Future<void> main() async {
@@ -29,6 +30,8 @@ class HabitudesApp extends StatelessWidget {
       builder: (lightDynamic, darkDynamic) {
         return MaterialApp.router(
           title: 'Habitudes',
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: AppTheme.light(colorScheme: lightDynamic),
           darkTheme: AppTheme.dark(colorScheme: darkDynamic),
           themeMode: ThemeMode.system,

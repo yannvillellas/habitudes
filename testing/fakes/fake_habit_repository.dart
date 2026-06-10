@@ -34,6 +34,14 @@ class FakeHabitRepository implements HabitRepository {
   }
 
   @override
+  Future<Result<void>> deleteHabit(String habitId) async {
+    _habits.remove(habitId);
+    _habitOrder.remove(habitId);
+    _completions.remove(habitId);
+    return const Result.ok(null);
+  }
+
+  @override
   Future<Result<void>> recordCompletion(HabitCompletion completion) async {
     final normalizedCompletion = HabitCompletion(habitId: completion.habitId, date: _normalizeDate(completion.date));
     final completions = _completions.putIfAbsent(completion.habitId, () => <HabitCompletion>[]);
@@ -65,6 +73,17 @@ class FakeHabitRepository implements HabitRepository {
   Future<Result<List<HabitCompletion>>> listCompletions(String habitId) async {
     final completions = _completions[habitId] ?? const <HabitCompletion>[];
     return Result.ok(List<HabitCompletion>.unmodifiable(completions));
+  }
+
+  @override
+  Future<Result<Set<String>>> getTodayCompletedHabitIds(DateTime date) async {
+    final ids = <String>{};
+    for (final entry in _completions.entries) {
+      if (entry.value.any((c) => _sameDate(c.date, date))) {
+        ids.add(entry.key);
+      }
+    }
+    return Result.ok(ids);
   }
 
   static DateTime _normalizeDate(DateTime date) {

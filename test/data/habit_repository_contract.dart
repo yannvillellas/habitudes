@@ -80,4 +80,34 @@ void runHabitRepositoryContract(Future<HabitRepository> Function() createReposit
 
     expect(completions, isEmpty);
   });
+
+  test('getTodayCompletedHabitIds returns habit IDs for given date only', () async {
+    await repository.recordCompletion(HabitCompletion(habitId: 'habit-1', date: DateTime(2026, 5, 6)));
+    await repository.recordCompletion(HabitCompletion(habitId: 'habit-1', date: DateTime(2026, 5, 7)));
+    await repository.recordCompletion(HabitCompletion(habitId: 'habit-2', date: DateTime(2026, 5, 7)));
+    await repository.recordCompletion(HabitCompletion(habitId: 'habit-3', date: DateTime(2026, 5, 8)));
+
+    final may6 = (await repository.getTodayCompletedHabitIds(DateTime(2026, 5, 6)) as Ok<Set<String>>).value;
+    final may7 = (await repository.getTodayCompletedHabitIds(DateTime(2026, 5, 7)) as Ok<Set<String>>).value;
+    final may9 = (await repository.getTodayCompletedHabitIds(DateTime(2026, 5, 9)) as Ok<Set<String>>).value;
+
+    expect(may6, {'habit-1'});
+    expect(may7, {'habit-1', 'habit-2'});
+    expect(may9, isEmpty);
+  });
+
+  test('deletes a habit and cascade-deletes its completions', () async {
+    final habit = Habit(id: 'habit-1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6));
+    await repository.saveHabit(habit);
+    await repository.recordCompletion(HabitCompletion(habitId: 'habit-1', date: DateTime(2026, 5, 6)));
+    await repository.recordCompletion(HabitCompletion(habitId: 'habit-1', date: DateTime(2026, 5, 7)));
+
+    await repository.deleteHabit('habit-1');
+
+    final habits = (await repository.listHabits() as Ok<List<Habit>>).value;
+    final completions = (await repository.listCompletions('habit-1') as Ok<List<HabitCompletion>>).value;
+
+    expect(habits, isEmpty);
+    expect(completions, isEmpty);
+  });
 }
