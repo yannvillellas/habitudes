@@ -1,0 +1,51 @@
+{
+  "@@locale": "en",
+  "appTitle": "Habitudes",
+  "@appTitle": {
+    "description": "Title of the application"
+  },
+  "noHabitsYet": "No habits yet",
+  "@noHabitsYet": {
+    "description": "Empty state when no habits have been created"
+  },
+  "failedToLoadHabits": "Failed to load habits",
+  "@failedToLoadHabits": {
+    "description": "Error message when habits fail to load"
+  },
+  "tryAgain": "Try again",
+  "@tryAgain": {
+    "description": "Button label to retry a failed action"
+  },
+  "noCompletionsYet": "No completions yet",
+  "@noCompletionsYet": {
+    "description": "Empty state when no completions exist for a habit"
+  },
+  "habitNotFound": "Habit not found",
+  "@habitNotFound": {
+    "description": "Error message when a habit does not exist"
+  },
+  "delete": "Delete",
+  "@delete": {
+    "description": "Menu option to delete a habit"
+  },
+  "failedToUpdate": "Failed to update",
+  "@failedToUpdate": {
+    "description": "Error snackbar message when toggle fails"
+  },
+  "retry": "Retry",
+  "@retry": {
+    "description": "Snackbar action to retry"
+  },
+  "save": "Save",
+  "@save": {
+    "description": "Button label to save a new habit"
+  },
+  "habitDefaultTitle": "Habit",
+  "@habitDefaultTitle": {
+    "description": "Default title when habit name is not yet loaded"
+  },
+  "newHabitHint": "New habit",
+  "@newHabitHint": {
+    "description": "Placeholder text in the new habit text field"
+  }
+}

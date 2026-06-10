@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../utils/date_formatting.dart';
 import '../view_models/habit_detail_viewmodel.dart';
 
@@ -11,13 +12,14 @@ class HabitDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: ListenableBuilder(
           listenable: viewModel.load,
           builder: (_, _) {
             final habit = viewModel.habit;
-            return Text(habit?.name ?? 'Habit');
+            return Text(habit?.name ?? l10n.habitDefaultTitle);
           },
         ),
         actions: [
@@ -30,7 +32,7 @@ class HabitDetailScreen extends StatelessWidget {
                 }
               }
             },
-            itemBuilder: (_) => const [PopupMenuItem(value: 'delete', child: Text('Delete'))],
+            itemBuilder: (_) => [PopupMenuItem(value: 'delete', child: Text(l10n.delete))],
           ),
         ],
       ),
@@ -47,7 +49,7 @@ class HabitDetailScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (viewModel.load.error) {
-            return const Center(child: Text('Habit not found'));
+            return Center(child: Text(l10n.habitNotFound));
           }
           if (viewModel.delete.running) {
             return const Center(child: CircularProgressIndicator());
@@ -71,7 +73,7 @@ class HabitDetailScreen extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(formatDayOfWeek(date), style: Theme.of(context).textTheme.bodySmall),
+                          Text(formatDayOfWeek(context, date), style: Theme.of(context).textTheme.bodySmall),
                           Text(dayOfMonth, style: Theme.of(context).textTheme.bodySmall),
                           Checkbox(
                             value: viewModel.isDayCompleted(date),

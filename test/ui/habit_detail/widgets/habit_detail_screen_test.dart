@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:habitudes/l10n/app_localizations.dart';
 import 'package:habitudes/domain/models/habit.dart';
-import 'package:habitudes/domain/models/habit_completion.dart';
 import 'package:habitudes/domain/models/result.dart';
 import 'package:habitudes/ui/habit_detail/view_models/habit_detail_viewmodel.dart';
 import 'package:habitudes/ui/habit_detail/widgets/habit_detail_screen.dart';
@@ -10,7 +10,11 @@ import 'package:habitudes/ui/habit_detail/widgets/habit_detail_screen.dart';
 import '../../../../testing/fakes/fake_habit_repository.dart';
 
 Widget buildTestWidget(HabitDetailViewModel viewModel) {
-  return MaterialApp(home: HabitDetailScreen(viewModel: viewModel));
+  return MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: HabitDetailScreen(viewModel: viewModel),
+  );
 }
 
 void main() {
@@ -56,6 +60,5 @@ void main() {
 
       expect(viewModel.delete.completed, isTrue);
     });
-
   });
 }

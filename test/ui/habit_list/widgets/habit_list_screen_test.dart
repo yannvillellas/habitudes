@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:habitudes/l10n/app_localizations.dart';
 import 'package:habitudes/domain/models/habit.dart';
 import 'package:habitudes/domain/models/habit_completion.dart';
 import 'package:habitudes/ui/create_habit/view_models/create_habit_viewmodel.dart';
@@ -12,6 +13,8 @@ import '../../../../testing/fakes/fake_habit_repository.dart';
 
 Widget buildTestWidget(HabitListViewModel viewModel, FakeHabitRepository repository) {
   return MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     home: HabitListScreen(
       viewModel: viewModel,
       onTapHabit: (_, _) {},

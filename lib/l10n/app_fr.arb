@@ -1,0 +1,15 @@
+{
+  "@@locale": "fr",
+  "appTitle": "Habitudes",
+  "noHabitsYet": "Aucune habitude",
+  "failedToLoadHabits": "Échec du chargement",
+  "tryAgain": "Réessayer",
+  "noCompletionsYet": "Aucune réalisation",
+  "habitNotFound": "Habitude introuvable",
+  "delete": "Supprimer",
+  "failedToUpdate": "Échec de la mise à jour",
+  "retry": "Réessayer",
+  "save": "Enregistrer",
+  "habitDefaultTitle": "Habitude",
+  "newHabitHint": "Nouvelle habitude"
+}
