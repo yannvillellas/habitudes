@@ -41,7 +41,13 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
             TextField(
               autofocus: true,
               controller: _controller,
+              textInputAction: TextInputAction.done,
               decoration: InputDecoration(hintText: l10n.newHabitHint, border: InputBorder.none),
+              onSubmitted: (_) {
+                if (!widget.viewModel.save.running && widget.viewModel.canSaveHabit(_controller.text)) {
+                  _saveHabit();
+                }
+              },
             ),
             ListenableBuilder(
               listenable: Listenable.merge([_controller, widget.viewModel.save]),
