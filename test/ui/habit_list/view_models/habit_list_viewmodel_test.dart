@@ -146,6 +146,17 @@ void main() {
       test('returns 0 for unknown habit', () async {
         expect(viewModel.score('nonexistent'), 0);
       });
+
+      test('score updates after toggling completion', () async {
+        await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 6, 1)));
+        await viewModel.load.execute();
+
+        final scoreBefore = viewModel.score('h1');
+
+        await viewModel.toggleCompletion.execute('h1');
+
+        expect(viewModel.score('h1'), greaterThan(scoreBefore));
+      });
     });
   });
 }

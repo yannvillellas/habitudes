@@ -74,6 +74,7 @@ class HabitListViewModel extends ChangeNotifier {
       switch (result) {
         case Ok<void>():
           _completedToday.remove(habitId);
+          await _recalculateScore(habitId);
         case Error<void>():
           break;
       }
@@ -84,11 +85,28 @@ class HabitListViewModel extends ChangeNotifier {
       switch (result) {
         case Ok<void>():
           _completedToday.add(habitId);
+          await _recalculateScore(habitId);
         case Error<void>():
           break;
       }
       notifyListeners();
       return result;
+    }
+  }
+
+  Future<void> _recalculateScore(String habitId) async {
+    final habit = _habits.where((h) => h.id == habitId).firstOrNull;
+    if (habit == null) return;
+    final completionsResult = await _habitRepository.listCompletions(habitId);
+    switch (completionsResult) {
+      case Ok<List<HabitCompletion>>():
+        _scores[habitId] = HabitScore.calculate(
+          completions: completionsResult.value,
+          habitCreatedAt: habit.createdAt,
+          today: _now(),
+        );
+      case Error<List<HabitCompletion>>():
+        _scores[habitId] = 0;
     }
   }
 }
