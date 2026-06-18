@@ -75,6 +75,15 @@ void main() {
       expect(find.text('Walk'), findsOneWidget);
     });
 
+    testWidgets('displays score next to habit name', (tester) async {
+      await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+      await viewModel.load.execute();
+      await tester.pumpWidget(buildTestWidget(viewModel, repository));
+
+      expect(find.text('0'), findsOneWidget);
+      expect(find.text('Read'), findsOneWidget);
+    });
+
     group('checkbox', () {
       testWidgets('is unchecked when habit not completed today', (tester) async {
         await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));

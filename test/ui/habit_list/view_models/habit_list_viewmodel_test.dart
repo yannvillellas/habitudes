@@ -124,5 +124,39 @@ void main() {
         expect(viewModel.isCompletedToday('h2'), isFalse);
       });
     });
+
+    group('score', () {
+      test('returns 0 for habit with no completions', () async {
+        await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+        await viewModel.load.execute();
+
+        expect(viewModel.score('h1'), 0);
+      });
+
+      test('returns positive score for habit with completions', () async {
+        await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 6, 1)));
+        for (int i = 1; i <= 8; i++) {
+          await repository.recordCompletion(HabitCompletion(habitId: 'h1', date: DateTime.utc(2026, 6, i)));
+        }
+        await viewModel.load.execute();
+
+        expect(viewModel.score('h1'), greaterThan(0));
+      });
+
+      test('returns 0 for unknown habit', () async {
+        expect(viewModel.score('nonexistent'), 0);
+      });
+
+      test('score updates after toggling completion', () async {
+        await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 6, 1)));
+        await viewModel.load.execute();
+
+        final scoreBefore = viewModel.score('h1');
+
+        await viewModel.toggleCompletion.execute('h1');
+
+        expect(viewModel.score('h1'), greaterThan(scoreBefore));
+      });
+    });
   });
 }

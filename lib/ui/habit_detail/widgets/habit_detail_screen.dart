@@ -59,6 +59,14 @@ class HabitDetailScreen extends StatelessWidget {
           }
           return Column(
             children: [
+              const SizedBox(height: 24),
+              Text('${viewModel.score}', style: Theme.of(context).textTheme.displayMedium),
+              Text(
+                _scoreBand(viewModel.score, l10n),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              ),
               const SizedBox(height: 16),
               SizedBox(
                 height: 100,
@@ -91,4 +99,12 @@ class HabitDetailScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+String _scoreBand(int score, AppLocalizations l10n) {
+  if (score <= 20) return l10n.habitScoreStartingOut;
+  if (score <= 50) return l10n.habitScoreBuilding;
+  if (score <= 80) return l10n.habitScoreTakingShape;
+  if (score <= 95) return l10n.habitScoreStrongHabit;
+  return l10n.habitScoreAutomatic;
 }

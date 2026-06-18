@@ -6,15 +6,18 @@ import '../../../data/repositories/habit_repository.dart';
 import '../../../domain/models/habit.dart';
 import '../../../domain/models/habit_completion.dart';
 import '../../../domain/models/result.dart';
+import '../../../domain/models/habit_score.dart';
 import '../../../utils/command.dart';
 
 class HabitDetailViewModel extends ChangeNotifier {
   final HabitRepository _habitRepository;
   final String _habitId;
+  final DateTime Function() _now;
 
-  HabitDetailViewModel({required HabitRepository habitRepository, required String habitId})
+  HabitDetailViewModel({required HabitRepository habitRepository, required String habitId, DateTime Function()? now})
     : _habitRepository = habitRepository,
-      _habitId = habitId {
+      _habitId = habitId,
+      _now = now ?? (() => DateTime.now()) {
     load = Command0<Habit>(_load)..execute();
     loadCompletions = Command0<List<HabitCompletion>>(_loadCompletions)..execute();
     toggleDayCompletion = Command1<void, DateTime>(_toggleDayCompletion);
@@ -33,8 +36,13 @@ class HabitDetailViewModel extends ChangeNotifier {
   UnmodifiableListView<HabitCompletion> get completions => UnmodifiableListView(_completions);
 
   List<DateTime> get last30Days {
-    final now = DateTime.now();
+    final now = _now();
     return List.generate(30, (i) => DateTime(now.year, now.month, now.day - i));
+  }
+
+  int get score {
+    if (_habit == null) return 0;
+    return HabitScore.calculate(completions: _completions, habitCreatedAt: _habit!.createdAt, today: _now());
   }
 
   bool isDayCompleted(DateTime date) {

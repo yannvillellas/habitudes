@@ -43,4 +43,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get newHabitHint => 'New habit';
+
+  @override
+  String get habitScoreStartingOut => 'Starting out';
+
+  @override
+  String get habitScoreBuilding => 'Building';
+
+  @override
+  String get habitScoreTakingShape => 'Taking shape';
+
+  @override
+  String get habitScoreStrongHabit => 'Strong habit';
+
+  @override
+  String get habitScoreAutomatic => 'Automatic';
 }
