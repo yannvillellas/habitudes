@@ -18,6 +18,7 @@ Widget buildTestWidget(HabitDetailViewModel viewModel) {
 }
 
 void main() {
+  final today = DateTime.utc(2026, 6, 18);
   group('HabitDetailScreen', () {
     late FakeHabitRepository repository;
 
@@ -27,22 +28,31 @@ void main() {
 
     testWidgets('renders habit name in app bar', (tester) async {
       await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
-      final viewModel = HabitDetailViewModel(habitRepository: repository, habitId: 'h1');
+      final viewModel = HabitDetailViewModel(habitRepository: repository, now: () => today, habitId: 'h1');
       await tester.pumpWidget(buildTestWidget(viewModel));
 
       expect(find.text('Read'), findsOneWidget);
     });
 
     testWidgets('shows error when habit not found', (tester) async {
-      final viewModel = HabitDetailViewModel(habitRepository: repository, habitId: 'missing');
+      final viewModel = HabitDetailViewModel(habitRepository: repository, now: () => today, habitId: 'missing');
       await tester.pumpWidget(buildTestWidget(viewModel));
 
       expect(find.text('Habit not found'), findsOneWidget);
     });
 
+    testWidgets('displays score and band label', (tester) async {
+      await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+      final viewModel = HabitDetailViewModel(habitRepository: repository, now: () => today, habitId: 'h1');
+      await tester.pumpWidget(buildTestWidget(viewModel));
+
+      expect(find.text('0'), findsWidgets);
+      expect(find.text('Starting out'), findsOneWidget);
+    });
+
     testWidgets('delete action removes habit and pops screen', (tester) async {
       await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
-      final viewModel = HabitDetailViewModel(habitRepository: repository, habitId: 'h1');
+      final viewModel = HabitDetailViewModel(habitRepository: repository, now: () => today, habitId: 'h1');
       await tester.pumpWidget(buildTestWidget(viewModel));
 
       await tester.tap(find.byType(PopupMenuButton<String>));

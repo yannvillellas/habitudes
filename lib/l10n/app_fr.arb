@@ -11,5 +11,10 @@
   "retry": "Réessayer",
   "save": "Enregistrer",
   "habitDefaultTitle": "Habitude",
-  "newHabitHint": "Nouvelle habitude"
+  "newHabitHint": "Nouvelle habitude",
+  "habitScoreStartingOut": "Début",
+  "habitScoreBuilding": "Construction",
+  "habitScoreTakingShape": "En place",
+  "habitScoreStrongHabit": "Solide",
+  "habitScoreAutomatic": "Automatique"
 }

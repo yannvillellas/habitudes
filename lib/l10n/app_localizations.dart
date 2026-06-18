@@ -169,6 +169,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New habit'**
   String get newHabitHint;
+
+  /// Score band label for habits at 0-20
+  ///
+  /// In en, this message translates to:
+  /// **'Starting out'**
+  String get habitScoreStartingOut;
+
+  /// Score band label for habits at 20-50
+  ///
+  /// In en, this message translates to:
+  /// **'Building'**
+  String get habitScoreBuilding;
+
+  /// Score band label for habits at 50-80
+  ///
+  /// In en, this message translates to:
+  /// **'Taking shape'**
+  String get habitScoreTakingShape;
+
+  /// Score band label for habits at 80-95
+  ///
+  /// In en, this message translates to:
+  /// **'Strong habit'**
+  String get habitScoreStrongHabit;
+
+  /// Score band label for habits at 95-100
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get habitScoreAutomatic;
 }
 
 class _AppLocalizationsDelegate

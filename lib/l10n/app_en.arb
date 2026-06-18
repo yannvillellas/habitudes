@@ -47,5 +47,25 @@
   "newHabitHint": "New habit",
   "@newHabitHint": {
     "description": "Placeholder text in the new habit text field"
+  },
+  "habitScoreStartingOut": "Starting out",
+  "@habitScoreStartingOut": {
+    "description": "Score band label for habits at 0-20"
+  },
+  "habitScoreBuilding": "Building",
+  "@habitScoreBuilding": {
+    "description": "Score band label for habits at 20-50"
+  },
+  "habitScoreTakingShape": "Taking shape",
+  "@habitScoreTakingShape": {
+    "description": "Score band label for habits at 50-80"
+  },
+  "habitScoreStrongHabit": "Strong habit",
+  "@habitScoreStrongHabit": {
+    "description": "Score band label for habits at 80-95"
+  },
+  "habitScoreAutomatic": "Automatic",
+  "@habitScoreAutomatic": {
+    "description": "Score band label for habits at 95-100"
   }
 }

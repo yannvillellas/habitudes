@@ -59,6 +59,7 @@ class HabitListScreen extends StatelessWidget {
                     },
                   ),
                   title: Text(habit.name),
+                  trailing: Text('${viewModel.score(habit.id)}'),
                   onTap: () => onTapHabit(context, habit.id),
                 );
               },
