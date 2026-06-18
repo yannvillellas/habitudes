@@ -7,6 +7,7 @@ import '../../../domain/models/habit.dart';
 import '../../../domain/models/habit_completion.dart';
 import '../../../domain/models/result.dart';
 import '../../../utils/command.dart';
+import '../../../domain/models/habit_score.dart';
 
 class HabitListViewModel extends ChangeNotifier {
   final HabitRepository _habitRepository;
@@ -28,8 +29,12 @@ class HabitListViewModel extends ChangeNotifier {
   final Set<String> _completedToday = {};
   bool isCompletedToday(String habitId) => _completedToday.contains(habitId);
 
+  final Map<String, int> _scores = {};
+  int score(String habitId) => _scores[habitId] ?? 0;
+
   Future<Result<List<Habit>>> _load() async {
     _completedToday.clear();
+    _scores.clear();
     final result = await _habitRepository.listHabits();
     switch (result) {
       case Ok<List<Habit>>():
@@ -41,6 +46,19 @@ class HabitListViewModel extends ChangeNotifier {
             _completedToday.addAll(completionsResult.value);
           case Error<Set<String>>():
             break;
+        }
+        for (final habit in _habits) {
+          final habitCompletions = await _habitRepository.listCompletions(habit.id);
+          switch (habitCompletions) {
+            case Ok<List<HabitCompletion>>():
+              _scores[habit.id] = HabitScore.calculate(
+                completions: habitCompletions.value,
+                habitCreatedAt: habit.createdAt,
+                today: today,
+              );
+            case Error<List<HabitCompletion>>():
+              _scores[habit.id] = 0;
+          }
         }
       case Error<List<Habit>>():
         break;
