@@ -3,31 +3,43 @@ package app.yann.habitudes
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import androidx.annotation.Keep
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.appwidget.GlanceAppWidget
-import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.provideContent
+import androidx.glance.appwidget.state.getAppWidgetState
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
 import androidx.glance.layout.fillMaxSize
+import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+private val habitIdPrefKey = stringPreferencesKey("habit_id")
+
 @Keep
 class HabitudesWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val habitName = withContext(Dispatchers.IO) {
-            val allIds = GlanceAppWidgetManager(context).getGlanceIds(HabitudesWidget::class.java)
-                .sortedBy { it.toString() }
-            val index = allIds.indexOf(id)
-            loadHabitNameAtIndex(context, if (index >= 0) index else 0)
+        val habitId = withContext(Dispatchers.IO) {
+            try {
+                val prefs = getAppWidgetState(context, PreferencesGlanceStateDefinition, id)
+                prefs[habitIdPrefKey]
+            } catch (_: Exception) {
+                null
+            }
+        }
+
+        val habitName = if (habitId != null) {
+            withContext(Dispatchers.IO) { loadHabitName(context, habitId) }
+        } else {
+            null
         }
 
         provideContent {
@@ -40,7 +52,7 @@ class HabitudesWidget : GlanceAppWidget() {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = habitName ?: "Habitudes",
+                        text = habitName ?: context.getString(R.string.no_habit),
                         style = TextStyle(color = GlanceTheme.colors.onSurface),
                     )
                 }
@@ -54,22 +66,21 @@ class HabitudesWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = HabitudesWidget()
 }
 
-private fun loadHabitNameAtIndex(context: Context, index: Int): String? {
+private fun loadHabitName(context: Context, habitId: String): String? {
     val db = try {
         val dbPath = context.getDatabasePath("habitudes.db").absolutePath
         SQLiteDatabase.openDatabase(dbPath, null, SQLiteDatabase.OPEN_READONLY)
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         return null
     }
     return try {
-        val names = mutableListOf<String>()
-        val cursor = db.rawQuery("SELECT name FROM habits ORDER BY sort_order ASC", null)
-        while (cursor.moveToNext()) {
-            names.add(cursor.getString(0))
+        val cursor = db.rawQuery("SELECT name FROM habits WHERE id = ?", arrayOf(habitId))
+        try {
+            if (cursor.moveToFirst()) cursor.getString(0) else null
+        } finally {
+            cursor.close()
         }
-        cursor.close()
-        if (names.isEmpty()) null else names[index % names.size]
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         null
     } finally {
         db.close()

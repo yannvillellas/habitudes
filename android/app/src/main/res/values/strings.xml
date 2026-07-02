@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="no_habit">No habit</string>
+    <string name="habit_title">Habit</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="no_habits_title">No habits</string>
+    <string name="no_habits_text">Create one in the app first.</string>
+</resources>
