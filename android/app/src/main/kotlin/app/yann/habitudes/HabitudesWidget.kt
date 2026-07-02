@@ -3,6 +3,7 @@ package app.yann.habitudes
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import androidx.annotation.Keep
+import androidx.compose.runtime.Composable
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
@@ -26,6 +27,10 @@ private val habitIdPrefKey = stringPreferencesKey("habit_id")
 @Keep
 class HabitudesWidget : GlanceAppWidget() {
 
+    override suspend fun providePreview(context: Context, id: Int) {
+        provideContent { widgetContent("Habitudes") }
+    }
+
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val habitId = withContext(Dispatchers.IO) {
             try {
@@ -43,20 +48,7 @@ class HabitudesWidget : GlanceAppWidget() {
         }
 
         provideContent {
-            GlanceTheme {
-                Column(
-                    modifier = GlanceModifier
-                        .fillMaxSize()
-                        .background(GlanceTheme.colors.widgetBackground),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = habitName ?: context.getString(R.string.no_habit),
-                        style = TextStyle(color = GlanceTheme.colors.onSurface),
-                    )
-                }
-            }
+            widgetContent(habitName ?: context.getString(R.string.no_habit))
         }
     }
 }
@@ -64,6 +56,21 @@ class HabitudesWidget : GlanceAppWidget() {
 @Keep
 class HabitudesWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = HabitudesWidget()
+}
+
+@Composable
+private fun widgetContent(text: String) {
+    GlanceTheme {
+        Column(
+            modifier = GlanceModifier
+                .fillMaxSize()
+                .background(GlanceTheme.colors.widgetBackground),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(text = text, style = TextStyle(color = GlanceTheme.colors.onSurface))
+        }
+    }
 }
 
 private fun loadHabitName(context: Context, habitId: String): String? {
