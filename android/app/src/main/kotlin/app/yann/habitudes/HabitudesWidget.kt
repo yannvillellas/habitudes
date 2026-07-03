@@ -4,10 +4,15 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import androidx.annotation.Keep
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
+import androidx.glance.appwidget.CheckBox
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.provideContent
@@ -60,6 +65,7 @@ class HabitudesWidgetReceiver : GlanceAppWidgetReceiver() {
 
 @Composable
 private fun widgetContent(text: String) {
+    var checked by remember { mutableStateOf(false) }
     GlanceTheme {
         Column(
             modifier = GlanceModifier
@@ -68,6 +74,7 @@ private fun widgetContent(text: String) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            CheckBox(checked = checked, onCheckedChange = { checked = !checked })
             Text(text = text, style = TextStyle(color = GlanceTheme.colors.onSurface))
         }
     }
