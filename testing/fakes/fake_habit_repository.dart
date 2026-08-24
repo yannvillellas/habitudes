@@ -9,6 +9,8 @@ class FakeHabitRepository implements HabitRepository {
   final Map<String, List<HabitCompletion>> _completions = <String, List<HabitCompletion>>{};
 
   Exception? listHabitsError;
+  Exception? recordCompletionError;
+  Exception? deleteCompletionError;
 
   @override
   Future<Result<void>> saveHabit(Habit habit) async {
@@ -43,6 +45,12 @@ class FakeHabitRepository implements HabitRepository {
 
   @override
   Future<Result<void>> recordCompletion(HabitCompletion completion) async {
+    final error = recordCompletionError;
+    if (error != null) {
+      recordCompletionError = null;
+      return Result.error(error);
+    }
+
     final normalizedCompletion = HabitCompletion(habitId: completion.habitId, date: _normalizeDate(completion.date));
     final completions = _completions.putIfAbsent(completion.habitId, () => <HabitCompletion>[]);
 
@@ -57,6 +65,12 @@ class FakeHabitRepository implements HabitRepository {
 
   @override
   Future<Result<void>> deleteCompletion(String habitId, DateTime date) async {
+    final error = deleteCompletionError;
+    if (error != null) {
+      deleteCompletionError = null;
+      return Result.error(error);
+    }
+
     final completions = _completions[habitId];
     if (completions == null) {
       return const Result.ok(null);

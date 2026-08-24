@@ -46,11 +46,6 @@ class HabitudesWidget : GlanceAppWidget() {
             val name = habitId?.let { database.loadHabitName(it) }
             val today = utcDateText(System.currentTimeMillis())
             val completedInDb = habitId?.let { database.isTodayCompleted(it, today) } ?: false
-            Log.d(
-                LOG_TAG,
-                "provideGlance: appWidgetId=$appWidgetId habitId=$habitId today=$today " +
-                    "db=$completedInDb -> checked=$completedInDb",
-            )
             name to completedInDb
         }
 
@@ -64,13 +59,11 @@ class HabitudesWidget : GlanceAppWidget() {
 @OptIn(ExperimentalGlanceApi::class)
 class CheckInToggleAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        Log.d(LOG_TAG, "onAction: fired, glanceId=$glanceId")
         val newChecked = parameters[ToggleableStateKey]
         if (newChecked == null) {
             Log.w(LOG_TAG, "onAction: ToggleableStateKey missing")
             return
         }
-        Log.d(LOG_TAG, "onAction: newChecked=$newChecked")
         val appWidgetId = (glanceId as? AppWidgetId)?.appWidgetId
         if (appWidgetId == null) {
             Log.w(LOG_TAG, "onAction: unexpected glanceId type")
@@ -91,8 +84,8 @@ class CheckInToggleAction : ActionCallback {
             return
         }
         val (habitId, success) = result
-        Log.d(LOG_TAG, "onAction: db write habitId=$habitId newChecked=$newChecked success=$success")
         if (!success) {
+            Log.e(LOG_TAG, "onAction: db write failed for habitId=$habitId newChecked=$newChecked")
             return
         }
         val remoteViews = HabitudesWidget().runComposition(
@@ -100,7 +93,6 @@ class CheckInToggleAction : ActionCallback {
             id = glanceId,
         ).first()
         AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, remoteViews)
-        Log.d(LOG_TAG, "onAction: render pushed")
     }
 }
 

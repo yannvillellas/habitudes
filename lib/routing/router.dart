@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../data/repositories/habit_repository.dart';
+import '../data/repositories/widget_sync_repository.dart';
 import '../ui/create_habit/view_models/create_habit_viewmodel.dart';
 import '../ui/create_habit/widgets/create_habit_screen.dart';
 import '../ui/habit_detail/view_models/habit_detail_viewmodel.dart';
@@ -18,7 +19,8 @@ GoRouter appRouter() {
         path: '/',
         builder: (context, state) {
           final repository = context.read<HabitRepository>();
-          final viewModel = HabitListViewModel(habitRepository: repository);
+          final widgetSyncRepository = context.read<WidgetSyncRepository>();
+          final viewModel = HabitListViewModel(habitRepository: repository, widgetSyncRepository: widgetSyncRepository);
           return HabitListScreen(
             viewModel: viewModel,
             onTapHabit: (_, habitId) => context.push('/habit/$habitId'),
@@ -40,8 +42,13 @@ GoRouter appRouter() {
         path: '/habit/:id',
         builder: (context, state) {
           final repository = context.read<HabitRepository>();
+          final widgetSyncRepository = context.read<WidgetSyncRepository>();
           final habitId = state.pathParameters['id']!;
-          final viewModel = HabitDetailViewModel(habitRepository: repository, habitId: habitId);
+          final viewModel = HabitDetailViewModel(
+            habitRepository: repository,
+            widgetSyncRepository: widgetSyncRepository,
+            habitId: habitId,
+          );
           return HabitDetailScreen(viewModel: viewModel, onDeleted: () => context.pop());
         },
       ),

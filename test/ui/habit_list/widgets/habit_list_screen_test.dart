@@ -10,6 +10,7 @@ import 'package:habitudes/ui/habit_list/view_models/habit_list_viewmodel.dart';
 import 'package:habitudes/ui/habit_list/widgets/habit_list_screen.dart';
 
 import '../../../../testing/fakes/fake_habit_repository.dart';
+import '../../../../testing/fakes/fake_widget_sync_repository.dart';
 
 Widget buildTestWidget(HabitListViewModel viewModel, FakeHabitRepository repository) {
   return MaterialApp(
@@ -37,7 +38,11 @@ void main() {
   final today = DateTime(2026, 6, 9);
 
   HabitListViewModel createViewModel(FakeHabitRepository repository) {
-    return HabitListViewModel(habitRepository: repository, now: () => today);
+    return HabitListViewModel(
+      habitRepository: repository,
+      widgetSyncRepository: FakeWidgetSyncRepository(),
+      now: () => today,
+    );
   }
 
   group('HabitListScreen', () {

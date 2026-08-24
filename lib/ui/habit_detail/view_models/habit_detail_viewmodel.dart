@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:flutter/foundation.dart';
 
 import '../../../data/repositories/habit_repository.dart';
+import '../../../data/repositories/widget_sync_repository.dart';
 import '../../../domain/models/habit.dart';
 import '../../../domain/models/habit_completion.dart';
 import '../../../domain/models/result.dart';
@@ -11,13 +12,19 @@ import '../../../utils/command.dart';
 
 class HabitDetailViewModel extends ChangeNotifier {
   final HabitRepository _habitRepository;
+  final WidgetSyncRepository _widgetSyncRepository;
   final String _habitId;
   final DateTime Function() _now;
 
-  HabitDetailViewModel({required HabitRepository habitRepository, required String habitId, DateTime Function()? now})
-    : _habitRepository = habitRepository,
-      _habitId = habitId,
-      _now = now ?? (() => DateTime.now()) {
+  HabitDetailViewModel({
+    required HabitRepository habitRepository,
+    required WidgetSyncRepository widgetSyncRepository,
+    required String habitId,
+    DateTime Function()? now,
+  }) : _habitRepository = habitRepository,
+       _widgetSyncRepository = widgetSyncRepository,
+       _habitId = habitId,
+       _now = now ?? (() => DateTime.now()) {
     load = Command0<Habit>(_load)..execute();
     loadCompletions = Command0<List<HabitCompletion>>(_loadCompletions)..execute();
     toggleDayCompletion = Command1<void, DateTime>(_toggleDayCompletion);
@@ -97,6 +104,9 @@ class HabitDetailViewModel extends ChangeNotifier {
         break;
     }
     notifyListeners();
+    if (result is Ok<void>) {
+      await _widgetSyncRepository.syncAll();
+    }
     return result;
   }
 

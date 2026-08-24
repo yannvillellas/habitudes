@@ -6,21 +6,28 @@ import 'package:habitudes/domain/models/result.dart';
 import 'package:habitudes/ui/habit_list/view_models/habit_list_viewmodel.dart';
 
 import '../../../../testing/fakes/fake_habit_repository.dart';
+import '../../../../testing/fakes/fake_widget_sync_repository.dart';
 
 void main() {
   final today = DateTime(2026, 6, 9);
 
-  HabitListViewModel createViewModel(FakeHabitRepository repository) {
-    return HabitListViewModel(habitRepository: repository, now: () => today);
+  HabitListViewModel createViewModel(FakeHabitRepository repository, FakeWidgetSyncRepository widgetSyncRepository) {
+    return HabitListViewModel(
+      habitRepository: repository,
+      widgetSyncRepository: widgetSyncRepository,
+      now: () => today,
+    );
   }
 
   group('HabitListViewModel', () {
     late FakeHabitRepository repository;
+    late FakeWidgetSyncRepository widgetSyncRepository;
     late HabitListViewModel viewModel;
 
     setUp(() async {
       repository = FakeHabitRepository();
-      viewModel = createViewModel(repository);
+      widgetSyncRepository = FakeWidgetSyncRepository();
+      viewModel = createViewModel(repository, widgetSyncRepository);
       await Future<void>.delayed(Duration.zero);
     });
 
@@ -122,6 +129,35 @@ void main() {
 
         expect(viewModel.isCompletedToday('h1'), isTrue);
         expect(viewModel.isCompletedToday('h2'), isFalse);
+      });
+
+      test('requests widget sync after recording completion', () async {
+        await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+        await viewModel.load.execute();
+
+        await viewModel.toggleCompletion.execute('h1');
+
+        expect(widgetSyncRepository.syncAllCalls, 1);
+      });
+
+      test('requests widget sync after deleting completion', () async {
+        await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+        await repository.recordCompletion(HabitCompletion(habitId: 'h1', date: today));
+        await viewModel.load.execute();
+
+        await viewModel.toggleCompletion.execute('h1');
+
+        expect(widgetSyncRepository.syncAllCalls, 1);
+      });
+
+      test('does not request widget sync when repository fails', () async {
+        await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+        await viewModel.load.execute();
+        repository.recordCompletionError = Exception('test error');
+
+        await viewModel.toggleCompletion.execute('h1');
+
+        expect(widgetSyncRepository.syncAllCalls, 0);
       });
     });
 

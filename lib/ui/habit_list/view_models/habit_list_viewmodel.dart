@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:flutter/foundation.dart';
 
 import '../../../data/repositories/habit_repository.dart';
+import '../../../data/repositories/widget_sync_repository.dart';
 import '../../../domain/models/habit.dart';
 import '../../../domain/models/habit_completion.dart';
 import '../../../domain/models/result.dart';
@@ -11,11 +12,16 @@ import '../../../domain/models/habit_score.dart';
 
 class HabitListViewModel extends ChangeNotifier {
   final HabitRepository _habitRepository;
+  final WidgetSyncRepository _widgetSyncRepository;
   final DateTime Function() _now;
 
-  HabitListViewModel({required HabitRepository habitRepository, DateTime Function()? now})
-    : _habitRepository = habitRepository,
-      _now = now ?? (() => DateTime.now()) {
+  HabitListViewModel({
+    required HabitRepository habitRepository,
+    required WidgetSyncRepository widgetSyncRepository,
+    DateTime Function()? now,
+  }) : _habitRepository = habitRepository,
+       _widgetSyncRepository = widgetSyncRepository,
+       _now = now ?? (() => DateTime.now()) {
     load = Command0<List<Habit>>(_load)..execute();
     toggleCompletion = Command1<void, String>(_toggleCompletion);
   }
@@ -69,29 +75,26 @@ class HabitListViewModel extends ChangeNotifier {
 
   Future<Result<void>> _toggleCompletion(String habitId) async {
     final today = _now();
-    if (_completedToday.contains(habitId)) {
-      final result = await _habitRepository.deleteCompletion(habitId, today);
-      switch (result) {
-        case Ok<void>():
+    final isCompleted = _completedToday.contains(habitId);
+    final result = isCompleted
+        ? await _habitRepository.deleteCompletion(habitId, today)
+        : await _habitRepository.recordCompletion(HabitCompletion(habitId: habitId, date: today));
+    switch (result) {
+      case Ok<void>():
+        if (isCompleted) {
           _completedToday.remove(habitId);
-          await _recalculateScore(habitId);
-        case Error<void>():
-          break;
-      }
-      notifyListeners();
-      return result;
-    } else {
-      final result = await _habitRepository.recordCompletion(HabitCompletion(habitId: habitId, date: today));
-      switch (result) {
-        case Ok<void>():
+        } else {
           _completedToday.add(habitId);
-          await _recalculateScore(habitId);
-        case Error<void>():
-          break;
-      }
-      notifyListeners();
-      return result;
+        }
+        await _recalculateScore(habitId);
+      case Error<void>():
+        break;
     }
+    notifyListeners();
+    if (result is Ok<void>) {
+      await _widgetSyncRepository.syncAll();
+    }
+    return result;
   }
 
   Future<void> _recalculateScore(String habitId) async {
