@@ -4,14 +4,26 @@ import '../../../l10n/app_localizations.dart';
 import '../../../utils/date_formatting.dart';
 import '../view_models/habit_detail_viewmodel.dart';
 
-class HabitDetailScreen extends StatelessWidget {
+class HabitDetailScreen extends StatefulWidget {
   final HabitDetailViewModel viewModel;
   final VoidCallback? onDeleted;
 
   const HabitDetailScreen({super.key, required this.viewModel, this.onDeleted});
 
   @override
+  State<HabitDetailScreen> createState() => _HabitDetailScreenState();
+}
+
+class _HabitDetailScreenState extends State<HabitDetailScreen> {
+  @override
+  void dispose() {
+    widget.viewModel.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final viewModel = widget.viewModel;
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
@@ -28,7 +40,7 @@ class HabitDetailScreen extends StatelessWidget {
               if (value == 'delete') {
                 await viewModel.delete.execute();
                 if (!viewModel.delete.error) {
-                  onDeleted?.call();
+                  widget.onDeleted?.call();
                 }
               }
             },

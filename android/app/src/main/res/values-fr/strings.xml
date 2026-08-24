@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="no_habit">Aucune habitude</string>
+    <string name="habit_title">Habitude</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Annuler</string>
+    <string name="no_habits_title">Aucune habitude</string>
+    <string name="no_habits_text">"Créer d'abord une habitude."</string>
+</resources>

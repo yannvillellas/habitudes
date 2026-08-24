@@ -4,7 +4,7 @@ import '../../core/ui/error_indicator.dart';
 import '../../../l10n/app_localizations.dart';
 import '../view_models/habit_list_viewmodel.dart';
 
-class HabitListScreen extends StatelessWidget {
+class HabitListScreen extends StatefulWidget {
   final HabitListViewModel viewModel;
   final void Function(BuildContext context, String habitId) onTapHabit;
   final void Function(BuildContext context) onAddHabit;
@@ -12,11 +12,26 @@ class HabitListScreen extends StatelessWidget {
   const HabitListScreen({super.key, required this.viewModel, required this.onTapHabit, required this.onAddHabit});
 
   @override
+  State<HabitListScreen> createState() => _HabitListScreenState();
+}
+
+class _HabitListScreenState extends State<HabitListScreen> {
+  @override
+  void dispose() {
+    widget.viewModel.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final viewModel = widget.viewModel;
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.appTitle)),
-      floatingActionButton: FloatingActionButton(onPressed: () => onAddHabit(context), child: const Icon(Icons.add)),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => widget.onAddHabit(context),
+        child: const Icon(Icons.add),
+      ),
       body: ListenableBuilder(
         listenable: Listenable.merge([viewModel, viewModel.load, viewModel.toggleCompletion]),
         builder: (context, _) {
@@ -60,7 +75,7 @@ class HabitListScreen extends StatelessWidget {
                   ),
                   title: Text(habit.name),
                   trailing: Text('${viewModel.score(habit.id)}'),
-                  onTap: () => onTapHabit(context, habit.id),
+                  onTap: () => widget.onTapHabit(context, habit.id),
                 );
               },
             ),

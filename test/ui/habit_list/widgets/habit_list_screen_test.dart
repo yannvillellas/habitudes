@@ -6,10 +6,12 @@ import 'package:habitudes/domain/models/habit.dart';
 import 'package:habitudes/domain/models/habit_completion.dart';
 import 'package:habitudes/ui/create_habit/view_models/create_habit_viewmodel.dart';
 import 'package:habitudes/ui/create_habit/widgets/create_habit_screen.dart';
+import 'package:habitudes/ui/core/sync_notifier.dart';
 import 'package:habitudes/ui/habit_list/view_models/habit_list_viewmodel.dart';
 import 'package:habitudes/ui/habit_list/widgets/habit_list_screen.dart';
 
 import '../../../../testing/fakes/fake_habit_repository.dart';
+import '../../../../testing/fakes/fake_widget_sync_repository.dart';
 
 Widget buildTestWidget(HabitListViewModel viewModel, FakeHabitRepository repository) {
   return MaterialApp(
@@ -37,7 +39,12 @@ void main() {
   final today = DateTime(2026, 6, 9);
 
   HabitListViewModel createViewModel(FakeHabitRepository repository) {
-    return HabitListViewModel(habitRepository: repository, now: () => today);
+    return HabitListViewModel(
+      habitRepository: repository,
+      widgetSyncRepository: FakeWidgetSyncRepository(),
+      syncNotifier: SyncNotifier(),
+      now: () => today,
+    );
   }
 
   group('HabitListScreen', () {
@@ -178,5 +185,35 @@ void main() {
         expect(find.text('Read'), findsOneWidget);
       });
     });
+
+    testWidgets('disposes the view model and its notifier subscription', (tester) async {
+      final syncNotifier = _ObservableSyncNotifier();
+      addTearDown(syncNotifier.dispose);
+      final ownedViewModel = HabitListViewModel(
+        habitRepository: repository,
+        widgetSyncRepository: FakeWidgetSyncRepository(),
+        syncNotifier: syncNotifier,
+        now: () => today,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: HabitListScreen(viewModel: ownedViewModel, onTapHabit: (_, _) {}, onAddHabit: (_) {}),
+        ),
+      );
+      await tester.pump();
+
+      expect(syncNotifier.hasSubscribers, isTrue);
+
+      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      await tester.pump();
+
+      expect(syncNotifier.hasSubscribers, isFalse);
+    });
   });
+}
+
+class _ObservableSyncNotifier extends SyncNotifier {
+  bool get hasSubscribers => hasListeners;
 }
