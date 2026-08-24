@@ -12,9 +12,9 @@ import '../ui/habit_detail/widgets/habit_detail_screen.dart';
 import '../ui/habit_list/view_models/habit_list_viewmodel.dart';
 import '../ui/habit_list/widgets/habit_list_screen.dart';
 
-GoRouter appRouter() {
+GoRouter appRouter({String? initialLocation}) {
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: initialLocation ?? '/',
     routes: [
       GoRoute(
         path: '/',

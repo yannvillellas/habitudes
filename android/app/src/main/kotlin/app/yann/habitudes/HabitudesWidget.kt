@@ -10,6 +10,9 @@ import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.ExperimentalGlanceApi
 import androidx.glance.action.ActionParameters
+import androidx.glance.action.actionParametersOf
+import androidx.glance.action.actionStartActivity
+import androidx.glance.action.clickable
 import androidx.glance.appwidget.AppWidgetId
 import androidx.glance.appwidget.CheckBox
 import androidx.glance.appwidget.GlanceAppWidget
@@ -34,26 +37,28 @@ import kotlinx.coroutines.withContext
 
 private const val LOG_TAG = "HabitudesWidget"
 
+private val habitIdKey = ActionParameters.Key<String>(EXTRA_HABIT_ID)
+
 @Keep
 class HabitudesWidget : GlanceAppWidget() {
 
     override suspend fun providePreview(context: Context, id: Int) {
-        provideContent { widgetContent("Habitudes", checked = false) }
+        provideContent { widgetContent("Habitudes", checked = false, habitId = null) }
     }
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val appWidgetId = (id as? AppWidgetId)?.appWidgetId
         val database = HabitudesDatabase(context)
-        val (habitName, checked) = withContext(Dispatchers.IO) {
+        val (habitName, checked, habitId) = withContext(Dispatchers.IO) {
             val habitId = appWidgetId?.let { database.getWidgetHabit(it) }
             val name = habitId?.let { database.loadHabitName(it) }
             val today = utcDateText(System.currentTimeMillis())
             val completedInDb = habitId?.let { database.isTodayCompleted(it, today) } ?: false
-            name to completedInDb
+            Triple(name, completedInDb, habitId)
         }
 
         provideContent {
-            widgetContent(habitName ?: context.getString(R.string.no_habit), checked)
+            widgetContent(habitName ?: context.getString(R.string.no_habit), checked, habitId)
         }
     }
 }
@@ -121,12 +126,22 @@ suspend fun renderAllWidgets(context: Context) = renderMutex.withLock {
 }
 
 @Composable
-private fun widgetContent(text: String, checked: Boolean) {
+private fun widgetContent(text: String, checked: Boolean, habitId: String?) {
     GlanceTheme {
+        val baseModifier = GlanceModifier
+            .fillMaxSize()
+            .background(GlanceTheme.colors.widgetBackground)
+        val columnModifier = if (habitId != null) {
+            baseModifier.clickable(
+                actionStartActivity<MainActivity>(
+                    actionParametersOf(habitIdKey to habitId),
+                ),
+            )
+        } else {
+            baseModifier
+        }
         Column(
-            modifier = GlanceModifier
-                .fillMaxSize()
-                .background(GlanceTheme.colors.widgetBackground),
+            modifier = columnModifier,
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -134,7 +149,10 @@ private fun widgetContent(text: String, checked: Boolean) {
                 checked = checked,
                 onCheckedChange = actionRunCallback<CheckInToggleAction>(),
             )
-            Text(text = text, style = TextStyle(color = GlanceTheme.colors.onSurface))
+            Text(
+                text = text,
+                style = TextStyle(color = GlanceTheme.colors.onSurface),
+            )
         }
     }
 }
