@@ -29,21 +29,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.ExperimentalGlanceApi
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.runComposition
-import androidx.glance.appwidget.state.getAppWidgetState
-import androidx.glance.appwidget.state.updateAppWidgetState
-import androidx.glance.state.PreferencesGlanceStateDefinition
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-
-private val habitIdPrefKey = stringPreferencesKey("habit_id")
 
 @OptIn(ExperimentalGlanceApi::class)
 @Keep
@@ -64,20 +57,8 @@ class HabitudesWidgetConfigActivity : ComponentActivity() {
 
         val habits = HabitudesDatabase(this@HabitudesWidgetConfigActivity).loadHabits()
 
-        val currentHabitId = runBlocking {
-            try {
-                val glanceId = GlanceAppWidgetManager(this@HabitudesWidgetConfigActivity)
-                    .getGlanceIdBy(appWidgetId)
-                val prefs = getAppWidgetState(
-                    this@HabitudesWidgetConfigActivity,
-                    PreferencesGlanceStateDefinition,
-                    glanceId,
-                )
-                prefs[habitIdPrefKey]
-            } catch (_: Exception) {
-                null
-            }
-        }
+        val currentHabitId = HabitudesDatabase(this@HabitudesWidgetConfigActivity)
+            .getWidgetHabit(appWidgetId)
 
         setContent {
             val colorScheme = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -118,15 +99,8 @@ class HabitudesWidgetConfigActivity : ComponentActivity() {
                     .getGlanceIdBy(appWidgetId)
 
                 withContext(Dispatchers.IO) {
-                    updateAppWidgetState(
-                        this@HabitudesWidgetConfigActivity,
-                        PreferencesGlanceStateDefinition,
-                        glanceId,
-                    ) { prefs ->
-                        prefs.toMutablePreferences().also {
-                            it.set(habitIdPrefKey, habitId)
-                        }
-                    }
+                    HabitudesDatabase(this@HabitudesWidgetConfigActivity)
+                        .setWidgetHabit(appWidgetId, habitId)
                 }
 
                 val remoteViews = HabitudesWidget().runComposition(

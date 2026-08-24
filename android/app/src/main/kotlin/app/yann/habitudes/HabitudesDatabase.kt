@@ -16,6 +16,11 @@ object HabitudesDb {
     const val SORT_ORDER_COLUMN = "sort_order"
     const val HABIT_ID_COLUMN = "habit_id"
     const val DATE_COLUMN = "date"
+
+    // Kotlin-owned table, created lazily (not part of the Dart schema in
+    // lib/data/repositories/habit_repository_sqflite.dart).
+    const val WIDGET_INSTANCES_TABLE = "widget_instances"
+    const val APPWIDGET_ID_COLUMN = "appwidget_id"
 }
 
 data class HabitItem(val id: String, val name: String)
@@ -101,6 +106,41 @@ class HabitudesDatabase(private val context: Context) {
         }
     }
 
+    fun getWidgetHabit(appWidgetId: Int): String? {
+        val db = openDatabase(readOnly = true) ?: return null
+        return try {
+            db.rawQuery(
+                "SELECT ${HabitudesDb.HABIT_ID_COLUMN} FROM ${HabitudesDb.WIDGET_INSTANCES_TABLE} " +
+                    "WHERE ${HabitudesDb.APPWIDGET_ID_COLUMN} = ?",
+                arrayOf(appWidgetId.toString()),
+            ).use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
+        } catch (_: Exception) {
+            null
+        } finally {
+            db.close()
+        }
+    }
+
+    fun setWidgetHabit(appWidgetId: Int, habitId: String): Boolean {
+        val db = openDatabase(readOnly = false) ?: return false
+        return try {
+            db.insertWithOnConflict(
+                HabitudesDb.WIDGET_INSTANCES_TABLE,
+                null,
+                ContentValues().apply {
+                    put(HabitudesDb.APPWIDGET_ID_COLUMN, appWidgetId)
+                    put(HabitudesDb.HABIT_ID_COLUMN, habitId)
+                },
+                SQLiteDatabase.CONFLICT_REPLACE,
+            )
+            true
+        } catch (_: Exception) {
+            false
+        } finally {
+            db.close()
+        }
+    }
+
     private fun openDatabase(readOnly: Boolean): SQLiteDatabase? {
         val path = context.getDatabasePath(HabitudesDb.DATABASE_NAME).absolutePath
         val flags = if (readOnly) SQLiteDatabase.OPEN_READONLY else SQLiteDatabase.OPEN_READWRITE
@@ -109,6 +149,13 @@ class HabitudesDatabase(private val context: Context) {
                 runCatching { db.execSQL("PRAGMA busy_timeout = 3000") }
                 if (!readOnly) {
                     runCatching { db.enableWriteAheadLogging() }
+                    runCatching {
+                        db.execSQL(
+                            "CREATE TABLE IF NOT EXISTS ${HabitudesDb.WIDGET_INSTANCES_TABLE} (" +
+                                "${HabitudesDb.APPWIDGET_ID_COLUMN} INTEGER PRIMARY KEY, " +
+                                "${HabitudesDb.HABIT_ID_COLUMN} TEXT NOT NULL)",
+                        )
+                    }
                 }
             }
         } catch (_: Exception) {
