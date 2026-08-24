@@ -1,7 +1,6 @@
 package app.yann.habitudes
 
 import android.content.Context
-import android.database.sqlite.SQLiteDatabase
 import androidx.annotation.Keep
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -47,7 +46,7 @@ class HabitudesWidget : GlanceAppWidget() {
         }
 
         val habitName = if (habitId != null) {
-            withContext(Dispatchers.IO) { loadHabitName(context, habitId) }
+            withContext(Dispatchers.IO) { HabitudesDatabase(context).loadHabitName(habitId) }
         } else {
             null
         }
@@ -77,26 +76,5 @@ private fun widgetContent(text: String) {
             CheckBox(checked = checked, onCheckedChange = { checked = !checked })
             Text(text = text, style = TextStyle(color = GlanceTheme.colors.onSurface))
         }
-    }
-}
-
-private fun loadHabitName(context: Context, habitId: String): String? {
-    val db = try {
-        val dbPath = context.getDatabasePath("habitudes.db").absolutePath
-        SQLiteDatabase.openDatabase(dbPath, null, SQLiteDatabase.OPEN_READONLY)
-    } catch (_: Exception) {
-        return null
-    }
-    return try {
-        val cursor = db.rawQuery("SELECT name FROM habits WHERE id = ?", arrayOf(habitId))
-        try {
-            if (cursor.moveToFirst()) cursor.getString(0) else null
-        } finally {
-            cursor.close()
-        }
-    } catch (_: Exception) {
-        null
-    } finally {
-        db.close()
     }
 }

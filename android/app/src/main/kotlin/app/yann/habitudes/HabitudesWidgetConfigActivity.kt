@@ -2,7 +2,6 @@ package app.yann.habitudes
 
 import android.appwidget.AppWidgetManager
 import android.content.Intent
-import android.database.sqlite.SQLiteDatabase
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -46,8 +45,6 @@ import kotlinx.coroutines.withContext
 
 private val habitIdPrefKey = stringPreferencesKey("habit_id")
 
-data class HabitItem(val id: String, val name: String)
-
 @OptIn(ExperimentalGlanceApi::class)
 @Keep
 class HabitudesWidgetConfigActivity : ComponentActivity() {
@@ -65,7 +62,7 @@ class HabitudesWidgetConfigActivity : ComponentActivity() {
         val resultValue = Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         setResult(RESULT_CANCELED, resultValue)
 
-        val habits = loadHabits()
+        val habits = HabitudesDatabase(this@HabitudesWidgetConfigActivity).loadHabits()
 
         val currentHabitId = runBlocking {
             try {
@@ -146,35 +143,6 @@ class HabitudesWidgetConfigActivity : ComponentActivity() {
             } catch (_: Exception) {
                 finish()
             }
-        }
-    }
-
-    private fun loadHabits(): List<HabitItem> {
-        val db = openDatabase() ?: return emptyList()
-        return try {
-            val result = mutableListOf<HabitItem>()
-            val cursor = db.rawQuery("SELECT id, name FROM habits ORDER BY sort_order ASC", null)
-            try {
-                while (cursor.moveToNext()) {
-                    result.add(HabitItem(cursor.getString(0), cursor.getString(1)))
-                }
-            } finally {
-                cursor.close()
-            }
-            result
-        } catch (_: Exception) {
-            emptyList()
-        } finally {
-            db.close()
-        }
-    }
-
-    private fun openDatabase(): SQLiteDatabase? {
-        return try {
-            val dbPath = getDatabasePath("habitudes.db").absolutePath
-            SQLiteDatabase.openDatabase(dbPath, null, SQLiteDatabase.OPEN_READONLY)
-        } catch (_: Exception) {
-            null
         }
     }
 }
