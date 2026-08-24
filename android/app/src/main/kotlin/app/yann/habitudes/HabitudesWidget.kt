@@ -28,6 +28,8 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 private const val LOG_TAG = "HabitudesWidget"
@@ -98,8 +100,10 @@ class HabitudesWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = HabitudesWidget()
 }
 
+private val renderMutex = Mutex()
+
 @OptIn(ExperimentalGlanceApi::class)
-suspend fun renderAllWidgets(context: Context) {
+suspend fun renderAllWidgets(context: Context) = renderMutex.withLock {
     val manager = GlanceAppWidgetManager(context)
     val appWidgetManager = AppWidgetManager.getInstance(context)
     val glanceIds = manager.getGlanceIds(HabitudesWidget::class.java)
