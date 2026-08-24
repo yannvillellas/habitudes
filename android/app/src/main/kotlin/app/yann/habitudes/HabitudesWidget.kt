@@ -13,6 +13,7 @@ import androidx.glance.action.ActionParameters
 import androidx.glance.appwidget.AppWidgetId
 import androidx.glance.appwidget.CheckBox
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.ToggleableStateKey
@@ -88,17 +89,31 @@ class CheckInToggleAction : ActionCallback {
             Log.e(LOG_TAG, "onAction: db write failed for habitId=$habitId newChecked=$newChecked")
             return
         }
-        val remoteViews = HabitudesWidget().runComposition(
-            context = context,
-            id = glanceId,
-        ).first()
-        AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, remoteViews)
+        renderAllWidgets(context)
     }
 }
 
 @Keep
 class HabitudesWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = HabitudesWidget()
+}
+
+@OptIn(ExperimentalGlanceApi::class)
+suspend fun renderAllWidgets(context: Context) {
+    val manager = GlanceAppWidgetManager(context)
+    val appWidgetManager = AppWidgetManager.getInstance(context)
+    val glanceIds = manager.getGlanceIds(HabitudesWidget::class.java)
+    val appWidgetIds = glanceIds.mapNotNull { (it as? AppWidgetId)?.appWidgetId }
+
+    // Widgets bound to the same habit render identical content: compose once
+    // per habit and push the same RemoteViews to every instance in the group.
+    val database = HabitudesDatabase(context)
+    val idsByHabit = appWidgetIds.groupBy { database.getWidgetHabit(it) }
+    for ((_, ids) in idsByHabit) {
+        val glanceId = GlanceAppWidgetManager(context).getGlanceIdBy(ids.first())
+        val remoteViews = HabitudesWidget().runComposition(context, glanceId).first()
+        ids.forEach { appWidgetManager.updateAppWidget(it, remoteViews) }
+    }
 }
 
 @Composable
