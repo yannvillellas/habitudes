@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../data/repositories/habit_repository.dart';
 import '../data/repositories/widget_sync_repository.dart';
+import '../ui/core/sync_notifier.dart';
 import '../ui/create_habit/view_models/create_habit_viewmodel.dart';
 import '../ui/create_habit/widgets/create_habit_screen.dart';
 import '../ui/habit_detail/view_models/habit_detail_viewmodel.dart';
@@ -20,7 +21,12 @@ GoRouter appRouter() {
         builder: (context, state) {
           final repository = context.read<HabitRepository>();
           final widgetSyncRepository = context.read<WidgetSyncRepository>();
-          final viewModel = HabitListViewModel(habitRepository: repository, widgetSyncRepository: widgetSyncRepository);
+          final syncNotifier = context.read<SyncNotifier>();
+          final viewModel = HabitListViewModel(
+            habitRepository: repository,
+            widgetSyncRepository: widgetSyncRepository,
+            syncNotifier: syncNotifier,
+          );
           return HabitListScreen(
             viewModel: viewModel,
             onTapHabit: (_, habitId) => context.push('/habit/$habitId'),
@@ -43,10 +49,12 @@ GoRouter appRouter() {
         builder: (context, state) {
           final repository = context.read<HabitRepository>();
           final widgetSyncRepository = context.read<WidgetSyncRepository>();
+          final syncNotifier = context.read<SyncNotifier>();
           final habitId = state.pathParameters['id']!;
           final viewModel = HabitDetailViewModel(
             habitRepository: repository,
             widgetSyncRepository: widgetSyncRepository,
+            syncNotifier: syncNotifier,
             habitId: habitId,
           );
           return HabitDetailScreen(viewModel: viewModel, onDeleted: () => context.pop());

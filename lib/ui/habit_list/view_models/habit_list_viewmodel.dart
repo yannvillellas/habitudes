@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
@@ -9,21 +10,49 @@ import '../../../domain/models/habit_completion.dart';
 import '../../../domain/models/result.dart';
 import '../../../utils/command.dart';
 import '../../../domain/models/habit_score.dart';
+import '../../core/sync_notifier.dart';
 
 class HabitListViewModel extends ChangeNotifier {
   final HabitRepository _habitRepository;
   final WidgetSyncRepository _widgetSyncRepository;
+  final SyncNotifier _syncNotifier;
   final DateTime Function() _now;
+  bool _isRefreshing = false;
 
   HabitListViewModel({
     required HabitRepository habitRepository,
     required WidgetSyncRepository widgetSyncRepository,
+    required SyncNotifier syncNotifier,
     DateTime Function()? now,
   }) : _habitRepository = habitRepository,
        _widgetSyncRepository = widgetSyncRepository,
+       _syncNotifier = syncNotifier,
        _now = now ?? (() => DateTime.now()) {
     load = Command0<List<Habit>>(_load)..execute();
     toggleCompletion = Command1<void, String>(_toggleCompletion);
+    _syncNotifier.addListener(_onRefreshRequested);
+  }
+
+  @override
+  void dispose() {
+    _syncNotifier.removeListener(_onRefreshRequested);
+    super.dispose();
+  }
+
+  void _onRefreshRequested() {
+    // Best-effort: repository failures keep the previous state; the guard
+    // prevents overlapping refreshes.
+    unawaited(refresh());
+  }
+
+  Future<void> refresh() async {
+    if (_isRefreshing || toggleCompletion.running) return;
+    _isRefreshing = true;
+    try {
+      await _load();
+    } finally {
+      _isRefreshing = false;
+    }
   }
 
   late final Command0<List<Habit>> load;
@@ -39,33 +68,40 @@ class HabitListViewModel extends ChangeNotifier {
   int score(String habitId) => _scores[habitId] ?? 0;
 
   Future<Result<List<Habit>>> _load() async {
-    _completedToday.clear();
-    _scores.clear();
     final result = await _habitRepository.listHabits();
     switch (result) {
       case Ok<List<Habit>>():
-        _habits = result.value;
+        final habits = result.value;
         final today = _now();
+        final completedToday = <String>{};
         final completionsResult = await _habitRepository.getTodayCompletedHabitIds(today);
         switch (completionsResult) {
           case Ok<Set<String>>():
-            _completedToday.addAll(completionsResult.value);
+            completedToday.addAll(completionsResult.value);
           case Error<Set<String>>():
             break;
         }
-        for (final habit in _habits) {
+        final scores = <String, int>{};
+        for (final habit in habits) {
           final habitCompletions = await _habitRepository.listCompletions(habit.id);
           switch (habitCompletions) {
             case Ok<List<HabitCompletion>>():
-              _scores[habit.id] = HabitScore.calculate(
+              scores[habit.id] = HabitScore.calculate(
                 completions: habitCompletions.value,
                 habitCreatedAt: habit.createdAt,
                 today: today,
               );
             case Error<List<HabitCompletion>>():
-              _scores[habit.id] = 0;
+              scores[habit.id] = 0;
           }
         }
+        _habits = habits;
+        _completedToday
+          ..clear()
+          ..addAll(completedToday);
+        _scores
+          ..clear()
+          ..addAll(scores);
       case Error<List<Habit>>():
         break;
     }

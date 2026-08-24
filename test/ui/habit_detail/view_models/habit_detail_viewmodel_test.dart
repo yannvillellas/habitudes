@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:habitudes/domain/models/habit.dart';
 import 'package:habitudes/domain/models/habit_completion.dart';
 import 'package:habitudes/domain/models/result.dart';
+import 'package:habitudes/ui/core/sync_notifier.dart';
 import 'package:habitudes/ui/habit_detail/view_models/habit_detail_viewmodel.dart';
 
 import '../../../../testing/fakes/fake_habit_repository.dart';
@@ -13,16 +16,19 @@ void main() {
   group('HabitDetailViewModel', () {
     late FakeHabitRepository repository;
     late FakeWidgetSyncRepository widgetSyncRepository;
+    late SyncNotifier syncNotifier;
 
     setUp(() {
       repository = FakeHabitRepository();
       widgetSyncRepository = FakeWidgetSyncRepository();
+      syncNotifier = SyncNotifier();
     });
 
     HabitDetailViewModel createViewModel(String habitId) {
       return HabitDetailViewModel(
         habitRepository: repository,
         widgetSyncRepository: widgetSyncRepository,
+        syncNotifier: syncNotifier,
         now: () => today,
         habitId: habitId,
       );
@@ -174,6 +180,58 @@ void main() {
         await viewModel.toggleDayCompletion.execute(DateTime.utc(2026, 6, 17));
 
         expect(widgetSyncRepository.syncAllCalls, 0);
+      });
+    });
+
+    group('sync refresh', () {
+      test('reloads habit and completions silently when the sync notifier fires', () async {
+        await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 6, 1)));
+        final viewModel = createViewModel('h1');
+        await viewModel.load.execute();
+        await viewModel.loadCompletions.execute();
+        expect(viewModel.isDayCompleted(DateTime.utc(2026, 6, 17)), isFalse);
+
+        await repository.recordCompletion(HabitCompletion(habitId: 'h1', date: DateTime.utc(2026, 6, 17)));
+        syncNotifier.notifyRefresh();
+        await pumpEventQueue();
+
+        expect(viewModel.isDayCompleted(DateTime.utc(2026, 6, 17)), isTrue);
+        expect(viewModel.load.running, isFalse);
+        expect(viewModel.loadCompletions.running, isFalse);
+      });
+
+      test('skips refresh while a toggle is running', () async {
+        await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 6, 1)));
+        await repository.recordCompletion(HabitCompletion(habitId: 'h1', date: DateTime.utc(2026, 6, 17)));
+        final viewModel = createViewModel('h1');
+        await viewModel.load.execute();
+        await viewModel.loadCompletions.execute();
+        final callsBefore = repository.listHabitsCalls;
+
+        repository.deleteCompletionGate = Completer<void>();
+        final toggleFuture = viewModel.toggleDayCompletion.execute(DateTime.utc(2026, 6, 17));
+        syncNotifier.notifyRefresh();
+        await pumpEventQueue();
+
+        expect(repository.listHabitsCalls, callsBefore);
+
+        repository.deleteCompletionGate!.complete();
+        await toggleFuture;
+        expect(viewModel.isDayCompleted(DateTime.utc(2026, 6, 17)), isFalse);
+      });
+
+      test('refresh emits a single notification', () async {
+        await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 6, 1)));
+        final viewModel = createViewModel('h1');
+        await viewModel.load.execute();
+        await viewModel.loadCompletions.execute();
+        var notifications = 0;
+        viewModel.addListener(() => notifications++);
+
+        syncNotifier.notifyRefresh();
+        await pumpEventQueue();
+
+        expect(notifications, 1);
       });
     });
   });

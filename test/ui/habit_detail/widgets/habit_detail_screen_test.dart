@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:habitudes/l10n/app_localizations.dart';
 import 'package:habitudes/domain/models/habit.dart';
 import 'package:habitudes/domain/models/result.dart';
+import 'package:habitudes/ui/core/sync_notifier.dart';
 import 'package:habitudes/ui/habit_detail/view_models/habit_detail_viewmodel.dart';
 import 'package:habitudes/ui/habit_detail/widgets/habit_detail_screen.dart';
 
@@ -32,6 +33,7 @@ void main() {
       final viewModel = HabitDetailViewModel(
         habitRepository: repository,
         widgetSyncRepository: FakeWidgetSyncRepository(),
+        syncNotifier: SyncNotifier(),
         now: () => today,
         habitId: 'h1',
       );
@@ -44,6 +46,7 @@ void main() {
       final viewModel = HabitDetailViewModel(
         habitRepository: repository,
         widgetSyncRepository: FakeWidgetSyncRepository(),
+        syncNotifier: SyncNotifier(),
         now: () => today,
         habitId: 'missing',
       );
@@ -57,6 +60,7 @@ void main() {
       final viewModel = HabitDetailViewModel(
         habitRepository: repository,
         widgetSyncRepository: FakeWidgetSyncRepository(),
+        syncNotifier: SyncNotifier(),
         now: () => today,
         habitId: 'h1',
       );
@@ -71,6 +75,7 @@ void main() {
       final viewModel = HabitDetailViewModel(
         habitRepository: repository,
         widgetSyncRepository: FakeWidgetSyncRepository(),
+        syncNotifier: SyncNotifier(),
         now: () => today,
         habitId: 'h1',
       );

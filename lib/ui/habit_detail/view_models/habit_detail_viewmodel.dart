@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
@@ -9,26 +10,56 @@ import '../../../domain/models/habit_completion.dart';
 import '../../../domain/models/result.dart';
 import '../../../domain/models/habit_score.dart';
 import '../../../utils/command.dart';
+import '../../core/sync_notifier.dart';
 
 class HabitDetailViewModel extends ChangeNotifier {
   final HabitRepository _habitRepository;
   final WidgetSyncRepository _widgetSyncRepository;
+  final SyncNotifier _syncNotifier;
   final String _habitId;
   final DateTime Function() _now;
+  bool _isRefreshing = false;
 
   HabitDetailViewModel({
     required HabitRepository habitRepository,
     required WidgetSyncRepository widgetSyncRepository,
+    required SyncNotifier syncNotifier,
     required String habitId,
     DateTime Function()? now,
   }) : _habitRepository = habitRepository,
        _widgetSyncRepository = widgetSyncRepository,
+       _syncNotifier = syncNotifier,
        _habitId = habitId,
        _now = now ?? (() => DateTime.now()) {
     load = Command0<Habit>(_load)..execute();
     loadCompletions = Command0<List<HabitCompletion>>(_loadCompletions)..execute();
     toggleDayCompletion = Command1<void, DateTime>(_toggleDayCompletion);
     delete = Command0<void>(_delete);
+    _syncNotifier.addListener(_onRefreshRequested);
+  }
+
+  @override
+  void dispose() {
+    _syncNotifier.removeListener(_onRefreshRequested);
+    super.dispose();
+  }
+
+  void _onRefreshRequested() {
+    // Best-effort: repository failures keep the previous state; the guard
+    // prevents overlapping refreshes.
+    unawaited(refresh());
+  }
+
+  Future<void> refresh() async {
+    if (_isRefreshing || toggleDayCompletion.running || delete.running) return;
+    _isRefreshing = true;
+    try {
+      await _fetchHabit();
+      await _fetchCompletions();
+      notifyListeners();
+    } finally {
+      _isRefreshing = false;
+    }
   }
 
   late final Command0<Habit> load;
@@ -57,6 +88,12 @@ class HabitDetailViewModel extends ChangeNotifier {
   }
 
   Future<Result<Habit>> _load() async {
+    final result = await _fetchHabit();
+    notifyListeners();
+    return result;
+  }
+
+  Future<Result<Habit>> _fetchHabit() async {
     final result = await _habitRepository.listHabits();
     switch (result) {
       case Ok<List<Habit>>():
@@ -64,7 +101,6 @@ class HabitDetailViewModel extends ChangeNotifier {
       case Error<List<Habit>>():
         break;
     }
-    notifyListeners();
     if (_habit == null) {
       return Result.error(Exception('Habit not found'));
     }
@@ -72,6 +108,12 @@ class HabitDetailViewModel extends ChangeNotifier {
   }
 
   Future<Result<List<HabitCompletion>>> _loadCompletions() async {
+    final result = await _fetchCompletions();
+    notifyListeners();
+    return result;
+  }
+
+  Future<Result<List<HabitCompletion>>> _fetchCompletions() async {
     final result = await _habitRepository.listCompletions(_habitId);
     switch (result) {
       case Ok<List<HabitCompletion>>():
@@ -79,7 +121,6 @@ class HabitDetailViewModel extends ChangeNotifier {
       case Error<List<HabitCompletion>>():
         break;
     }
-    notifyListeners();
     return result;
   }
 

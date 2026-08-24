@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:habitudes/data/repositories/habit_repository.dart';
 import 'package:habitudes/domain/models/habit.dart';
 import 'package:habitudes/domain/models/habit_completion.dart';
@@ -11,6 +13,9 @@ class FakeHabitRepository implements HabitRepository {
   Exception? listHabitsError;
   Exception? recordCompletionError;
   Exception? deleteCompletionError;
+  int listHabitsCalls = 0;
+  Completer<void>? recordCompletionGate;
+  Completer<void>? deleteCompletionGate;
 
   @override
   Future<Result<void>> saveHabit(Habit habit) async {
@@ -24,6 +29,7 @@ class FakeHabitRepository implements HabitRepository {
 
   @override
   Future<Result<List<Habit>>> listHabits() async {
+    listHabitsCalls++;
     final error = listHabitsError;
     if (error != null) {
       listHabitsError = null;
@@ -45,6 +51,11 @@ class FakeHabitRepository implements HabitRepository {
 
   @override
   Future<Result<void>> recordCompletion(HabitCompletion completion) async {
+    final gate = recordCompletionGate;
+    if (gate != null) {
+      await gate.future;
+    }
+
     final error = recordCompletionError;
     if (error != null) {
       recordCompletionError = null;
@@ -65,6 +76,11 @@ class FakeHabitRepository implements HabitRepository {
 
   @override
   Future<Result<void>> deleteCompletion(String habitId, DateTime date) async {
+    final gate = deleteCompletionGate;
+    if (gate != null) {
+      await gate.future;
+    }
+
     final error = deleteCompletionError;
     if (error != null) {
       deleteCompletionError = null;

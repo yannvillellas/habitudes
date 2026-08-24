@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:habitudes/data/repositories/habit_repository.dart';
 import 'package:habitudes/data/repositories/widget_sync_repository.dart';
 import 'package:habitudes/main.dart';
+import 'package:habitudes/ui/core/sync_notifier.dart';
 import '../testing/fakes/fake_habit_repository.dart';
 import '../testing/fakes/fake_widget_sync_repository.dart';
 
@@ -14,6 +15,7 @@ void main() {
         providers: [
           Provider<HabitRepository>.value(value: FakeHabitRepository()),
           Provider<WidgetSyncRepository>.value(value: FakeWidgetSyncRepository()),
+          ChangeNotifierProvider<SyncNotifier>.value(value: SyncNotifier()),
         ],
         child: const HabitudesApp(),
       ),
