@@ -6,7 +6,14 @@ class DatabaseService {
   DatabaseService(this._db);
 
   static Future<DatabaseService> open(String path, {required Future<void> Function(Database, int) onCreate}) async {
-    final db = await openDatabase(path, version: 1, onCreate: (db, version) => onCreate(db, version));
+    final db = await openDatabase(
+      path,
+      version: 1,
+      onConfigure: (db) async {
+        await db.rawQuery('PRAGMA journal_mode = WAL');
+      },
+      onCreate: (db, version) => onCreate(db, version),
+    );
     return DatabaseService(db);
   }
 
