@@ -2,6 +2,7 @@ package app.yann.habitudes
 
 import android.appwidget.AppWidgetManager
 import android.content.Context
+import android.content.Intent
 import android.util.Log
 import android.widget.RemoteViews
 import androidx.annotation.Keep
@@ -32,6 +33,7 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
 import androidx.glance.text.Text
+import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -120,6 +122,17 @@ class HabitudesWidgetReceiver : GlanceAppWidgetReceiver() {
             appWidgetIds.forEach { database.deleteWidgetHabit(it) }
         }
     }
+
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        if (intent.action == Intent.ACTION_LOCALE_CHANGED) {
+            // Glance's own locale handling goes through the session-based update
+            // path, which does not render in this project; render directly.
+            CoroutineScope(Dispatchers.IO).launch {
+                renderAllWidgets(context.applicationContext)
+            }
+        }
+    }
 }
 
 private val renderMutex = Mutex()
@@ -203,7 +216,7 @@ private fun widgetContent(text: String, checked: Boolean, habitId: String?) {
             )
             Text(
                 text = text,
-                style = TextStyle(color = GlanceTheme.colors.onSurface),
+                style = TextStyle(color = GlanceTheme.colors.onSurface, textAlign = TextAlign.Center),
             )
         }
     }
