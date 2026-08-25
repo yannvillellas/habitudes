@@ -66,7 +66,6 @@ class HabitudesWidget : GlanceAppWidget() {
 }
 
 @Keep
-@OptIn(ExperimentalGlanceApi::class)
 class CheckInToggleAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         val newChecked = parameters[ToggleableStateKey]
