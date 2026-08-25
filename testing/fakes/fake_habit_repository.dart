@@ -13,7 +13,10 @@ class FakeHabitRepository implements HabitRepository {
   Exception? listHabitsError;
   Exception? recordCompletionError;
   Exception? deleteCompletionError;
+  Exception? deleteHabitError;
+  Exception? todayCompletedError;
   int listHabitsCalls = 0;
+  Completer<void>? listHabitsGate;
   Completer<void>? recordCompletionGate;
   Completer<void>? deleteCompletionGate;
 
@@ -30,6 +33,11 @@ class FakeHabitRepository implements HabitRepository {
   @override
   Future<Result<List<Habit>>> listHabits() async {
     listHabitsCalls++;
+    final gate = listHabitsGate;
+    if (gate != null) {
+      await gate.future;
+    }
+
     final error = listHabitsError;
     if (error != null) {
       listHabitsError = null;
@@ -43,6 +51,12 @@ class FakeHabitRepository implements HabitRepository {
 
   @override
   Future<Result<void>> deleteHabit(String habitId) async {
+    final error = deleteHabitError;
+    if (error != null) {
+      deleteHabitError = null;
+      return Result.error(error);
+    }
+
     _habits.remove(habitId);
     _habitOrder.remove(habitId);
     _completions.remove(habitId);
@@ -107,6 +121,12 @@ class FakeHabitRepository implements HabitRepository {
 
   @override
   Future<Result<Set<String>>> getTodayCompletedHabitIds(DateTime date) async {
+    final error = todayCompletedError;
+    if (error != null) {
+      todayCompletedError = null;
+      return Result.error(error);
+    }
+
     final ids = <String>{};
     for (final entry in _completions.entries) {
       if (entry.value.any((c) => _sameDate(c.date, date))) {

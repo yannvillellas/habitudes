@@ -45,6 +45,7 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "app.yann.habitudes"
+        manifestPlaceholders["appLabel"] = "Habitudes"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -54,6 +55,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Distinct applicationId so the debug build installs side-by-side
+            // with the production build on the same device.
+            applicationIdSuffix = ".debug"
+            manifestPlaceholders["appLabel"] = "Habitudes Debug"
+        }
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.

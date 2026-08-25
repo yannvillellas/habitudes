@@ -46,7 +46,7 @@ class HabitListViewModel extends ChangeNotifier {
   }
 
   Future<void> refresh() async {
-    if (_isRefreshing || toggleCompletion.running) return;
+    if (_isRefreshing || load.running || toggleCompletion.running) return;
     _isRefreshing = true;
     try {
       await _load();
@@ -73,12 +73,14 @@ class HabitListViewModel extends ChangeNotifier {
       case Ok<List<Habit>>():
         final habits = result.value;
         final today = _now();
-        final completedToday = <String>{};
+        Set<String>? completedToday;
         final completionsResult = await _habitRepository.getTodayCompletedHabitIds(today);
         switch (completionsResult) {
           case Ok<Set<String>>():
-            completedToday.addAll(completionsResult.value);
+            completedToday = completionsResult.value;
           case Error<Set<String>>():
+            // Preserve the previous set: a failed completions query must
+            // not flash every checkbox unchecked.
             break;
         }
         final scores = <String, int>{};
@@ -96,9 +98,11 @@ class HabitListViewModel extends ChangeNotifier {
           }
         }
         _habits = habits;
-        _completedToday
-          ..clear()
-          ..addAll(completedToday);
+        if (completedToday != null) {
+          _completedToday
+            ..clear()
+            ..addAll(completedToday);
+        }
         _scores
           ..clear()
           ..addAll(scores);

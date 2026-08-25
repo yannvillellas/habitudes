@@ -28,7 +28,7 @@ data class HabitItem(val id: String, val name: String)
 class HabitudesDatabase(private val context: Context) {
 
     fun loadHabits(): List<HabitItem> {
-        val db = openDatabase(readOnly = true) ?: return emptyList()
+        val db = openDatabase() ?: return emptyList()
         return try {
             buildList {
                 db.rawQuery(
@@ -43,13 +43,11 @@ class HabitudesDatabase(private val context: Context) {
             }
         } catch (_: Exception) {
             emptyList()
-        } finally {
-            db.close()
         }
     }
 
     fun loadHabitName(habitId: String): String? {
-        val db = openDatabase(readOnly = true) ?: return null
+        val db = openDatabase() ?: return null
         return try {
             db.rawQuery(
                 "SELECT ${HabitudesDb.NAME_COLUMN} FROM ${HabitudesDb.HABITS_TABLE} " +
@@ -58,13 +56,11 @@ class HabitudesDatabase(private val context: Context) {
             ).use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
         } catch (_: Exception) {
             null
-        } finally {
-            db.close()
         }
     }
 
     fun isTodayCompleted(habitId: String, dateText: String): Boolean {
-        val db = openDatabase(readOnly = true) ?: return false
+        val db = openDatabase() ?: return false
         return try {
             db.rawQuery(
                 "SELECT COUNT(*) FROM ${HabitudesDb.COMPLETIONS_TABLE} " +
@@ -73,13 +69,11 @@ class HabitudesDatabase(private val context: Context) {
             ).use { cursor -> cursor.moveToFirst() && cursor.getInt(0) > 0 }
         } catch (_: Exception) {
             false
-        } finally {
-            db.close()
         }
     }
 
     fun setTodayCompleted(habitId: String, completed: Boolean, dateText: String): Boolean {
-        val db = openDatabase(readOnly = false) ?: return false
+        val db = openDatabase() ?: return false
         return try {
             if (completed) {
                 db.insertWithOnConflict(
@@ -101,13 +95,11 @@ class HabitudesDatabase(private val context: Context) {
             true
         } catch (_: Exception) {
             false
-        } finally {
-            db.close()
         }
     }
 
     fun getWidgetHabit(appWidgetId: Int): String? {
-        val db = openDatabase(readOnly = true) ?: return null
+        val db = openDatabase() ?: return null
         return try {
             db.rawQuery(
                 "SELECT ${HabitudesDb.HABIT_ID_COLUMN} FROM ${HabitudesDb.WIDGET_INSTANCES_TABLE} " +
@@ -116,13 +108,11 @@ class HabitudesDatabase(private val context: Context) {
             ).use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
         } catch (_: Exception) {
             null
-        } finally {
-            db.close()
         }
     }
 
     fun setWidgetHabit(appWidgetId: Int, habitId: String): Boolean {
-        val db = openDatabase(readOnly = false) ?: return false
+        val db = openDatabase() ?: return false
         return try {
             db.insertWithOnConflict(
                 HabitudesDb.WIDGET_INSTANCES_TABLE,
@@ -136,34 +126,62 @@ class HabitudesDatabase(private val context: Context) {
             true
         } catch (_: Exception) {
             false
-        } finally {
-            db.close()
         }
     }
 
-    private fun openDatabase(readOnly: Boolean): SQLiteDatabase? {
-        val path = context.getDatabasePath(HabitudesDb.DATABASE_NAME).absolutePath
-        val flags = if (readOnly) SQLiteDatabase.OPEN_READONLY else SQLiteDatabase.OPEN_READWRITE
+    fun deleteWidgetHabit(appWidgetId: Int): Boolean {
+        val db = openDatabase() ?: return false
         return try {
-            SQLiteDatabase.openDatabase(path, null, flags, NoOpErrorHandler).also { db ->
-                runCatching { db.execSQL("PRAGMA busy_timeout = 3000") }
-                if (!readOnly) {
-                    runCatching { db.enableWriteAheadLogging() }
-                    runCatching {
-                        db.execSQL(
-                            "CREATE TABLE IF NOT EXISTS ${HabitudesDb.WIDGET_INSTANCES_TABLE} (" +
-                                "${HabitudesDb.APPWIDGET_ID_COLUMN} INTEGER PRIMARY KEY, " +
-                                "${HabitudesDb.HABIT_ID_COLUMN} TEXT NOT NULL)",
-                        )
+            db.delete(
+                HabitudesDb.WIDGET_INSTANCES_TABLE,
+                "${HabitudesDb.APPWIDGET_ID_COLUMN} = ?",
+                arrayOf(appWidgetId.toString()),
+            )
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun openDatabase(): SQLiteDatabase? = getOrCreateConnection(context)
+
+    companion object {
+        // One process-wide connection: WAL setup and the schema-creation write
+        // run once instead of on every per-query open/close cycle.
+        @Volatile
+        private var cachedConnection: SQLiteDatabase? = null
+
+        private fun getOrCreateConnection(context: Context): SQLiteDatabase? {
+            cachedConnection?.let { return it }
+            return synchronized(this) {
+                cachedConnection?.let { return it }
+                val path = context.getDatabasePath(HabitudesDb.DATABASE_NAME).absolutePath
+                try {
+                    SQLiteDatabase.openDatabase(
+                        path,
+                        null,
+                        SQLiteDatabase.OPEN_READWRITE,
+                        NoOpErrorHandler,
+                    ).also { db ->
+                        runCatching { db.execSQL("PRAGMA busy_timeout = 3000") }
+                        runCatching { db.enableWriteAheadLogging() }
+                        runCatching {
+                            db.execSQL(
+                                "CREATE TABLE IF NOT EXISTS ${HabitudesDb.WIDGET_INSTANCES_TABLE} (" +
+                                    "${HabitudesDb.APPWIDGET_ID_COLUMN} INTEGER PRIMARY KEY, " +
+                                    "${HabitudesDb.HABIT_ID_COLUMN} TEXT NOT NULL)",
+                            )
+                        }
+                        cachedConnection = db
                     }
+                } catch (_: Exception) {
+                    null
                 }
             }
-        } catch (_: Exception) {
-            null
         }
-    }
 
-    private object NoOpErrorHandler : DatabaseErrorHandler {
-        override fun onCorruption(dbObj: SQLiteDatabase) = Unit
+        private object NoOpErrorHandler : DatabaseErrorHandler {
+            override fun onCorruption(dbObj: SQLiteDatabase) = Unit
+        }
     }
 }

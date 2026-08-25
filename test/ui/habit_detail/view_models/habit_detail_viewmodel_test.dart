@@ -63,6 +63,38 @@ void main() {
       expect(habits, isEmpty);
     });
 
+    group('delete sync', () {
+      test('requests widget sync after deleting', () async {
+        await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+        final viewModel = createViewModel('h1');
+
+        await viewModel.delete.execute();
+
+        expect(widgetSyncRepository.syncAllCalls, 1);
+      });
+
+      test('notifies the sync notifier after deleting', () async {
+        await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+        final viewModel = createViewModel('h1');
+        var notifications = 0;
+        syncNotifier.addListener(() => notifications++);
+
+        await viewModel.delete.execute();
+
+        expect(notifications, 1);
+      });
+
+      test('does not request widget sync when deletion fails', () async {
+        await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+        repository.deleteHabitError = Exception('test error');
+        final viewModel = createViewModel('h1');
+
+        await viewModel.delete.execute();
+
+        expect(widgetSyncRepository.syncAllCalls, 0);
+      });
+    });
+
     group('score', () {
       test('score increases after adding a completion', () async {
         final createdAt = DateTime.utc(2026, 6, 1);

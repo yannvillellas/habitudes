@@ -10,8 +10,8 @@ class HabitOpenChannelListener {
   HabitOpenChannelListener({required void Function(String habitId) onOpenHabit}) {
     _channel.setMethodCallHandler((call) async {
       if (call.method == 'openHabit') {
-        final habitId = call.arguments as String?;
-        if (habitId != null) {
+        final habitId = call.arguments;
+        if (habitId is String) {
           onOpenHabit(habitId);
         }
       }

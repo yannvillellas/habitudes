@@ -8,11 +8,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.Keep
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -29,16 +31,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.glance.ExperimentalGlanceApi
-import androidx.glance.appwidget.GlanceAppWidgetManager
-import androidx.glance.appwidget.runComposition
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@OptIn(ExperimentalGlanceApi::class)
 @Keep
 class HabitudesWidgetConfigActivity : ComponentActivity() {
 
@@ -55,10 +54,24 @@ class HabitudesWidgetConfigActivity : ComponentActivity() {
         val resultValue = Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         setResult(RESULT_CANCELED, resultValue)
 
-        val habits = HabitudesDatabase(this@HabitudesWidgetConfigActivity).loadHabits()
+        // The activity is exported (required for configure); refuse to run
+        // without a valid widget id instead of writing a -1 mapping row.
+        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+            finish()
+            return
+        }
 
-        val currentHabitId = HabitudesDatabase(this@HabitudesWidgetConfigActivity)
-            .getWidgetHabit(appWidgetId)
+        val habitsState = mutableStateOf<List<HabitItem>?>(null)
+        val currentHabitIdState = mutableStateOf<String?>(null)
+
+        lifecycleScope.launch {
+            val database = HabitudesDatabase(this@HabitudesWidgetConfigActivity)
+            val (habits, currentHabitId) = withContext(Dispatchers.IO) {
+                database.loadHabits() to database.getWidgetHabit(appWidgetId)
+            }
+            currentHabitIdState.value = currentHabitId
+            habitsState.value = habits
+        }
 
         setContent {
             val colorScheme = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -76,17 +89,20 @@ class HabitudesWidgetConfigActivity : ComponentActivity() {
             }
 
             MaterialTheme(colorScheme = colorScheme) {
-                if (habits.isEmpty()) {
-                    EmptyHabitsDialog(onDismiss = { finish() })
-                } else {
-                    var selectedId by remember { mutableStateOf(currentHabitId) }
-                    HabitPickerDialog(
-                        habits = habits,
-                        selectedId = selectedId,
-                        onSelectionChanged = { selectedId = it },
-                        onConfirm = { selectedId?.let { id -> commitSelection(id) } },
-                        onDismiss = { finish() },
-                    )
+                val habits = habitsState.value
+                when {
+                    habits == null -> LoadingDialog()
+                    habits.isEmpty() -> EmptyHabitsDialog(onDismiss = { finish() })
+                    else -> {
+                        var selectedId by remember(habits) { mutableStateOf(currentHabitIdState.value) }
+                        HabitPickerDialog(
+                            habits = habits,
+                            selectedId = selectedId,
+                            onSelectionChanged = { selectedId = it },
+                            onConfirm = { selectedId?.let { id -> commitSelection(id) } },
+                            onDismiss = { finish() },
+                        )
+                    }
                 }
             }
         }
@@ -95,30 +111,54 @@ class HabitudesWidgetConfigActivity : ComponentActivity() {
     private fun commitSelection(habitId: String) {
         CoroutineScope(Dispatchers.Main).launch {
             try {
-                val glanceId = GlanceAppWidgetManager(this@HabitudesWidgetConfigActivity)
-                    .getGlanceIdBy(appWidgetId)
+                // The id must still be bound to this app's widget before the
+                // mapping write; a forged extra would fail here.
+                if (AppWidgetManager.getInstance(this@HabitudesWidgetConfigActivity)
+                        .getAppWidgetInfo(appWidgetId) == null
+                ) {
+                    finish()
+                    return@launch
+                }
 
-                withContext(Dispatchers.IO) {
+                val success = withContext(Dispatchers.IO) {
                     HabitudesDatabase(this@HabitudesWidgetConfigActivity)
                         .setWidgetHabit(appWidgetId, habitId)
                 }
 
-                val remoteViews = HabitudesWidget().runComposition(
-                    context = this@HabitudesWidgetConfigActivity,
-                    id = glanceId,
-                ).first()
-
-                AppWidgetManager.getInstance(this@HabitudesWidgetConfigActivity)
-                    .updateAppWidget(appWidgetId, remoteViews)
+                if (!success) {
+                    finish()
+                    return@launch
+                }
 
                 val resultValue = Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
                 setResult(RESULT_OK, resultValue)
                 finish()
+                val context = applicationContext
+                CoroutineScope(Dispatchers.IO).launch {
+                    renderWidget(context, appWidgetId)
+                    // Second render covers the launcher's host-attach window:
+                    // the id may not be registered when the first render runs.
+                    delay(1000)
+                    renderWidget(context, appWidgetId)
+                }
             } catch (_: Exception) {
                 finish()
             }
         }
     }
+}
+
+@Composable
+private fun LoadingDialog() {
+    AlertDialog(
+        onDismissRequest = {},
+        confirmButton = {},
+        text = {
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        },
+    )
 }
 
 @Composable
