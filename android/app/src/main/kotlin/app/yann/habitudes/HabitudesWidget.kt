@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
+import androidx.glance.LocalContext
 import androidx.glance.ExperimentalGlanceApi
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
@@ -28,6 +29,8 @@ import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
 import androidx.glance.layout.fillMaxSize
+import androidx.glance.semantics.contentDescription
+import androidx.glance.semantics.semantics
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import kotlinx.coroutines.CoroutineScope
@@ -190,9 +193,13 @@ private fun widgetContent(text: String, checked: Boolean, habitId: String?) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            val checkInLabel = LocalContext.current.getString(R.string.check_in_today)
             CheckBox(
                 checked = checked,
                 onCheckedChange = actionRunCallback<CheckInToggleAction>(),
+                modifier = GlanceModifier.semantics {
+                    contentDescription = checkInLabel
+                },
             )
             Text(
                 text = text,

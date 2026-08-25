@@ -40,5 +40,22 @@ void main() {
 
       expect(opened, isNull);
     });
+
+    test('ignores openHabit with non-string arguments without throwing', () async {
+      String? opened;
+      HabitOpenChannelListener(onOpenHabit: (habitId) => opened = habitId);
+
+      final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      ByteData? replyData;
+      final message = const StandardMethodCodec().encodeMethodCall(const MethodCall('openHabit', 42));
+      await messenger.handlePlatformMessage(widgetSyncChannelName, message, (ByteData? reply) {
+        replyData = reply;
+      });
+
+      expect(opened, isNull);
+      expect(replyData, isNotNull);
+      // decodeEnvelope throws on error envelopes (e.g. a TypeError from a bad cast).
+      expect(const StandardMethodCodec().decodeEnvelope(replyData!), isNull);
+    });
   });
 }
