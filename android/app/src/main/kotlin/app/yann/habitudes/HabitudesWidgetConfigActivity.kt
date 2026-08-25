@@ -8,11 +8,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.Keep
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -29,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -50,10 +53,17 @@ class HabitudesWidgetConfigActivity : ComponentActivity() {
         val resultValue = Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         setResult(RESULT_CANCELED, resultValue)
 
-        val habits = HabitudesDatabase(this@HabitudesWidgetConfigActivity).loadHabits()
+        val habitsState = mutableStateOf<List<HabitItem>?>(null)
+        val currentHabitIdState = mutableStateOf<String?>(null)
 
-        val currentHabitId = HabitudesDatabase(this@HabitudesWidgetConfigActivity)
-            .getWidgetHabit(appWidgetId)
+        lifecycleScope.launch {
+            val database = HabitudesDatabase(this@HabitudesWidgetConfigActivity)
+            val (habits, currentHabitId) = withContext(Dispatchers.IO) {
+                database.loadHabits() to database.getWidgetHabit(appWidgetId)
+            }
+            currentHabitIdState.value = currentHabitId
+            habitsState.value = habits
+        }
 
         setContent {
             val colorScheme = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -71,17 +81,20 @@ class HabitudesWidgetConfigActivity : ComponentActivity() {
             }
 
             MaterialTheme(colorScheme = colorScheme) {
-                if (habits.isEmpty()) {
-                    EmptyHabitsDialog(onDismiss = { finish() })
-                } else {
-                    var selectedId by remember { mutableStateOf(currentHabitId) }
-                    HabitPickerDialog(
-                        habits = habits,
-                        selectedId = selectedId,
-                        onSelectionChanged = { selectedId = it },
-                        onConfirm = { selectedId?.let { id -> commitSelection(id) } },
-                        onDismiss = { finish() },
-                    )
+                val habits = habitsState.value
+                when {
+                    habits == null -> LoadingDialog()
+                    habits.isEmpty() -> EmptyHabitsDialog(onDismiss = { finish() })
+                    else -> {
+                        var selectedId by remember(habits) { mutableStateOf(currentHabitIdState.value) }
+                        HabitPickerDialog(
+                            habits = habits,
+                            selectedId = selectedId,
+                            onSelectionChanged = { selectedId = it },
+                            onConfirm = { selectedId?.let { id -> commitSelection(id) } },
+                            onDismiss = { finish() },
+                        )
+                    }
                 }
             }
         }
@@ -112,6 +125,19 @@ class HabitudesWidgetConfigActivity : ComponentActivity() {
             }
         }
     }
+}
+
+@Composable
+private fun LoadingDialog() {
+    AlertDialog(
+        onDismissRequest = {},
+        confirmButton = {},
+        text = {
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        },
+    )
 }
 
 @Composable
