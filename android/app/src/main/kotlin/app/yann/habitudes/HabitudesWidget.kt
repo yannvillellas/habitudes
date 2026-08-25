@@ -54,7 +54,7 @@ class HabitudesWidget : GlanceAppWidget() {
         val (habitName, checked, habitId) = withContext(Dispatchers.IO) {
             val habitId = appWidgetId?.let { database.getWidgetHabit(it) }
             val name = habitId?.let { database.loadHabitName(it) }
-            val today = utcDateText(System.currentTimeMillis())
+            val today = deviceDateText(System.currentTimeMillis())
             val completedInDb = habitId?.let { database.isTodayCompleted(it, today) } ?: false
             Triple(name, completedInDb, habitId)
         }
@@ -78,7 +78,7 @@ class CheckInToggleAction : ActionCallback {
             Log.w(LOG_TAG, "onAction: unexpected glanceId type")
             return
         }
-        val today = utcDateText(System.currentTimeMillis())
+        val today = deviceDateText(System.currentTimeMillis())
         val result = withContext(Dispatchers.IO) {
             val database = HabitudesDatabase(context)
             val habitId = database.getWidgetHabit(appWidgetId)

@@ -2,12 +2,9 @@ package app.yann.habitudes
 
 import java.util.Calendar
 import java.util.Locale
-import java.util.TimeZone
 
-private val utcTimeZone = TimeZone.getTimeZone("UTC")
-
-fun utcDateText(epochMillis: Long): String {
-    val calendar = Calendar.getInstance(utcTimeZone)
+fun deviceDateText(epochMillis: Long): String {
+    val calendar = Calendar.getInstance()
     calendar.timeInMillis = epochMillis
     return String.format(
         Locale.US,
