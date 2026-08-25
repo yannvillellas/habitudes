@@ -13,6 +13,7 @@ class FakeHabitRepository implements HabitRepository {
   Exception? listHabitsError;
   Exception? recordCompletionError;
   Exception? deleteCompletionError;
+  Exception? deleteHabitError;
   int listHabitsCalls = 0;
   Completer<void>? recordCompletionGate;
   Completer<void>? deleteCompletionGate;
@@ -43,6 +44,12 @@ class FakeHabitRepository implements HabitRepository {
 
   @override
   Future<Result<void>> deleteHabit(String habitId) async {
+    final error = deleteHabitError;
+    if (error != null) {
+      deleteHabitError = null;
+      return Result.error(error);
+    }
+
     _habits.remove(habitId);
     _habitOrder.remove(habitId);
     _completions.remove(habitId);

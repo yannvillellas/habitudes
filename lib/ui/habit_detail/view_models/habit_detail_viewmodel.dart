@@ -160,6 +160,10 @@ class HabitDetailViewModel extends ChangeNotifier {
         break;
     }
     notifyListeners();
+    if (result is Ok<void>) {
+      _syncNotifier.notifyRefresh();
+      await _widgetSyncRepository.syncAll();
+    }
     return result;
   }
 }

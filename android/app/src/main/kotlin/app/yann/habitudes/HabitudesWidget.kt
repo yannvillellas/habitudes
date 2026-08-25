@@ -30,8 +30,10 @@ import androidx.glance.layout.Column
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -105,6 +107,16 @@ class CheckInToggleAction : ActionCallback {
 @Keep
 class HabitudesWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = HabitudesWidget()
+
+    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
+        super.onDeleted(context, appWidgetIds)
+        // Best-effort cleanup of the Kotlin-owned mapping; losing it to process
+        // death only leaves an orphan row that a recycled id could pick up.
+        CoroutineScope(Dispatchers.IO).launch {
+            val database = HabitudesDatabase(context.applicationContext)
+            appWidgetIds.forEach { database.deleteWidgetHabit(it) }
+        }
+    }
 }
 
 private val renderMutex = Mutex()

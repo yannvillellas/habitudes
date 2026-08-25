@@ -141,6 +141,22 @@ class HabitudesDatabase(private val context: Context) {
         }
     }
 
+    fun deleteWidgetHabit(appWidgetId: Int): Boolean {
+        val db = openDatabase(readOnly = false) ?: return false
+        return try {
+            db.delete(
+                HabitudesDb.WIDGET_INSTANCES_TABLE,
+                "${HabitudesDb.APPWIDGET_ID_COLUMN} = ?",
+                arrayOf(appWidgetId.toString()),
+            )
+            true
+        } catch (_: Exception) {
+            false
+        } finally {
+            db.close()
+        }
+    }
+
     private fun openDatabase(readOnly: Boolean): SQLiteDatabase? {
         val path = context.getDatabasePath(HabitudesDb.DATABASE_NAME).absolutePath
         val flags = if (readOnly) SQLiteDatabase.OPEN_READONLY else SQLiteDatabase.OPEN_READWRITE
