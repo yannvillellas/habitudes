@@ -23,5 +23,19 @@ void main() {
 
       expect(rows.single.values.single, 'wal');
     });
+
+    test('sets a busy timeout on the connection', () async {
+      final dir = await Directory.systemTemp.createTemp('habitudes_busy_test');
+      addTearDown(() => dir.delete(recursive: true));
+      final path = '${dir.path}/test.db';
+
+      await DatabaseService.open(path, onCreate: (db, version) async {});
+
+      final probe = await openDatabase(path);
+      addTearDown(probe.close);
+      final rows = await probe.rawQuery('PRAGMA busy_timeout');
+
+      expect(rows.single.values.single, 3000);
+    });
   });
 }

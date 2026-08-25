@@ -11,6 +11,7 @@ class DatabaseService {
       version: 1,
       onConfigure: (db) async {
         await db.rawQuery('PRAGMA journal_mode = WAL');
+        await db.rawQuery('PRAGMA busy_timeout = 3000');
       },
       onCreate: (db, version) => onCreate(db, version),
     );
