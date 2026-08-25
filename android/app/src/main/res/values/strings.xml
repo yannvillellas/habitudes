@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="no_habit">No habit</string>
+    <string name="widget_description">Shows a habit and lets you check it off for the day.</string>
     <string name="habit_title">Habit</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
