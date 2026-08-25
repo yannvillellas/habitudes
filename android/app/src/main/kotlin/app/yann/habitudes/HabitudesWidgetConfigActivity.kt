@@ -29,16 +29,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.glance.ExperimentalGlanceApi
-import androidx.glance.appwidget.GlanceAppWidgetManager
-import androidx.glance.appwidget.runComposition
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@OptIn(ExperimentalGlanceApi::class)
 @Keep
 class HabitudesWidgetConfigActivity : ComponentActivity() {
 
@@ -95,25 +90,23 @@ class HabitudesWidgetConfigActivity : ComponentActivity() {
     private fun commitSelection(habitId: String) {
         CoroutineScope(Dispatchers.Main).launch {
             try {
-                val glanceId = GlanceAppWidgetManager(this@HabitudesWidgetConfigActivity)
-                    .getGlanceIdBy(appWidgetId)
-
-                withContext(Dispatchers.IO) {
+                val success = withContext(Dispatchers.IO) {
                     HabitudesDatabase(this@HabitudesWidgetConfigActivity)
                         .setWidgetHabit(appWidgetId, habitId)
                 }
 
-                val remoteViews = HabitudesWidget().runComposition(
-                    context = this@HabitudesWidgetConfigActivity,
-                    id = glanceId,
-                ).first()
-
-                AppWidgetManager.getInstance(this@HabitudesWidgetConfigActivity)
-                    .updateAppWidget(appWidgetId, remoteViews)
+                if (!success) {
+                    finish()
+                    return@launch
+                }
 
                 val resultValue = Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
                 setResult(RESULT_OK, resultValue)
                 finish()
+                val context = applicationContext
+                CoroutineScope(Dispatchers.IO).launch {
+                    renderAllWidgets(context)
+                }
             } catch (_: Exception) {
                 finish()
             }
