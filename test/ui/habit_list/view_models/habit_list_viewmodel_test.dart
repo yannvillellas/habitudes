@@ -239,6 +239,34 @@ void main() {
         dedicatedNotifier.dispose();
       });
 
+      test('skips refresh while a load is running', () async {
+        await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+        await viewModel.load.execute();
+        final callsBefore = repository.listHabitsCalls;
+
+        repository.listHabitsGate = Completer<void>();
+        final loadFuture = viewModel.load.execute();
+        syncNotifier.notifyRefresh();
+        await pumpEventQueue();
+
+        expect(repository.listHabitsCalls, callsBefore + 1);
+
+        repository.listHabitsGate!.complete();
+        await loadFuture;
+      });
+
+      test('preserves today completions when the completions query fails', () async {
+        await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
+        await repository.recordCompletion(HabitCompletion(habitId: 'h1', date: today));
+        await viewModel.load.execute();
+        expect(viewModel.isCompletedToday('h1'), isTrue);
+
+        repository.todayCompletedError = Exception('test error');
+        await viewModel.load.execute();
+
+        expect(viewModel.isCompletedToday('h1'), isTrue);
+      });
+
       test('preserves state when refresh fails', () async {
         await repository.saveHabit(Habit(id: 'h1', name: 'Read', createdAt: DateTime.utc(2026, 5, 6)));
         await repository.recordCompletion(HabitCompletion(habitId: 'h1', date: today));
