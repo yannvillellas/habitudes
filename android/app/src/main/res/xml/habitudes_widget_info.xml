@@ -5,7 +5,6 @@
     android:minResizeWidth="40dp"
     android:minResizeHeight="40dp"
     android:resizeMode="horizontal|vertical"
-    android:description="@string/widget_description"
     android:configure="app.yann.habitudes.HabitudesWidgetConfigActivity"
     android:widgetFeatures="reconfigurable"
     android:widgetCategory="home_screen"

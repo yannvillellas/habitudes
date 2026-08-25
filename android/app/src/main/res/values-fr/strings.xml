@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="no_habit">Aucune habitude</string>
-    <string name="widget_description">Affiche une habitude et permet de la valider pour la journée.</string>
     <string name="habit_title">Habitude</string>
     <string name="ok">OK</string>
     <string name="cancel">Annuler</string>
