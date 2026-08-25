@@ -54,6 +54,13 @@ class HabitudesWidgetConfigActivity : ComponentActivity() {
         val resultValue = Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         setResult(RESULT_CANCELED, resultValue)
 
+        // The activity is exported (required for configure); refuse to run
+        // without a valid widget id instead of writing a -1 mapping row.
+        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+            finish()
+            return
+        }
+
         val habitsState = mutableStateOf<List<HabitItem>?>(null)
         val currentHabitIdState = mutableStateOf<String?>(null)
 
@@ -104,6 +111,15 @@ class HabitudesWidgetConfigActivity : ComponentActivity() {
     private fun commitSelection(habitId: String) {
         CoroutineScope(Dispatchers.Main).launch {
             try {
+                // The id must still be bound to this app's widget before the
+                // mapping write; a forged extra would fail here.
+                if (AppWidgetManager.getInstance(this@HabitudesWidgetConfigActivity)
+                        .getAppWidgetInfo(appWidgetId) == null
+                ) {
+                    finish()
+                    return@launch
+                }
+
                 val success = withContext(Dispatchers.IO) {
                     HabitudesDatabase(this@HabitudesWidgetConfigActivity)
                         .setWidgetHabit(appWidgetId, habitId)
