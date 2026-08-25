@@ -34,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -118,7 +119,11 @@ class HabitudesWidgetConfigActivity : ComponentActivity() {
                 finish()
                 val context = applicationContext
                 CoroutineScope(Dispatchers.IO).launch {
-                    renderAllWidgets(context)
+                    renderWidget(context, appWidgetId)
+                    // Second render covers the launcher's host-attach window:
+                    // the id may not be registered when the first render runs.
+                    delay(1000)
+                    renderWidget(context, appWidgetId)
                 }
             } catch (_: Exception) {
                 finish()

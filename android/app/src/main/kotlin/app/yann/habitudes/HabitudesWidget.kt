@@ -3,6 +3,7 @@ package app.yann.habitudes
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.util.Log
+import android.widget.RemoteViews
 import androidx.annotation.Keep
 import androidx.compose.runtime.Composable
 import androidx.glance.GlanceId
@@ -108,21 +109,52 @@ class HabitudesWidgetReceiver : GlanceAppWidgetReceiver() {
 
 private val renderMutex = Mutex()
 
-@OptIn(ExperimentalGlanceApi::class)
-suspend fun renderAllWidgets(context: Context) = renderMutex.withLock {
-    val manager = GlanceAppWidgetManager(context)
-    val appWidgetManager = AppWidgetManager.getInstance(context)
-    val glanceIds = manager.getGlanceIds(HabitudesWidget::class.java)
-    val appWidgetIds = glanceIds.mapNotNull { (it as? AppWidgetId)?.appWidgetId }
+private val renderRetryDelaysMs = longArrayOf(500, 1000)
 
-    // Widgets bound to the same habit render identical content: compose once
-    // per habit and push the same RemoteViews to every instance in the group.
-    val database = HabitudesDatabase(context)
-    val idsByHabit = appWidgetIds.groupBy { database.getWidgetHabit(it) }
-    for ((_, ids) in idsByHabit) {
-        val glanceId = GlanceAppWidgetManager(context).getGlanceIdBy(ids.first())
-        val remoteViews = HabitudesWidget().runComposition(context, glanceId).first()
-        ids.forEach { appWidgetManager.updateAppWidget(it, remoteViews) }
+@OptIn(ExperimentalGlanceApi::class)
+private suspend fun composeWithRetry(context: Context, glanceId: GlanceId): RemoteViews? {
+    val remoteViews = retryOnIllegalState(renderRetryDelaysMs) {
+        HabitudesWidget().runComposition(context, glanceId).first()
+    }
+    if (remoteViews == null) {
+        Log.e(LOG_TAG, "runComposition failed after retries, glanceId=$glanceId")
+    }
+    return remoteViews
+}
+
+suspend fun renderAllWidgets(context: Context): Unit = renderMutex.withLock {
+    try {
+        val manager = GlanceAppWidgetManager(context)
+        val appWidgetManager = AppWidgetManager.getInstance(context)
+        val glanceIds = manager.getGlanceIds(HabitudesWidget::class.java)
+        val appWidgetIds = glanceIds.mapNotNull { (it as? AppWidgetId)?.appWidgetId }
+
+        // Widgets bound to the same habit render identical content: compose once
+        // per habit and push the same RemoteViews to every instance in the group.
+        val database = HabitudesDatabase(context)
+        val idsByHabit = appWidgetIds.groupBy { database.getWidgetHabit(it) }
+        for ((_, ids) in idsByHabit) {
+            val appWidgetId = ids.first()
+            try {
+                val glanceId = GlanceAppWidgetManager(context).getGlanceIdBy(appWidgetId)
+                val remoteViews = composeWithRetry(context, glanceId) ?: continue
+                ids.forEach { appWidgetManager.updateAppWidget(it, remoteViews) }
+            } catch (e: Exception) {
+                Log.e(LOG_TAG, "render failed for appWidgetId=$appWidgetId", e)
+            }
+        }
+    } catch (e: Exception) {
+        Log.e(LOG_TAG, "renderAllWidgets failed", e)
+    }
+}
+
+suspend fun renderWidget(context: Context, appWidgetId: Int): Unit = renderMutex.withLock {
+    try {
+        val glanceId = GlanceAppWidgetManager(context).getGlanceIdBy(appWidgetId)
+        val remoteViews = composeWithRetry(context, glanceId) ?: return@withLock
+        AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, remoteViews)
+    } catch (e: Exception) {
+        Log.e(LOG_TAG, "render failed for appWidgetId=$appWidgetId", e)
     }
 }
 
