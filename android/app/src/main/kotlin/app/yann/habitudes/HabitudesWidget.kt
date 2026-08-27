@@ -125,9 +125,9 @@ class HabitudesWidgetReceiver : GlanceAppWidgetReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
-        if (intent.action == Intent.ACTION_LOCALE_CHANGED) {
-            // Glance's own locale handling goes through the session-based update
-            // path, which does not render in this project; render directly.
+        if (intent.action == Intent.ACTION_LOCALE_CHANGED ||
+            intent.action == AppWidgetManager.ACTION_APPWIDGET_UPDATE
+        ) {
             CoroutineScope(Dispatchers.IO).launch {
                 renderAllWidgets(context.applicationContext)
             }
