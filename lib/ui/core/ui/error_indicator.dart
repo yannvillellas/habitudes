@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Displays an error message with an optional retry button.
 class ErrorIndicator extends StatelessWidget {
