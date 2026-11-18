@@ -50,7 +50,7 @@ private val habitIdKey = ActionParameters.Key<String>(EXTRA_HABIT_ID)
 @Keep
 class HabitudesWidget : GlanceAppWidget() {
 
-    override suspend fun providePreview(context: Context, id: Int) {
+    override suspend fun providePreview(context: Context, widgetCategory: Int) {
         provideContent {
             widgetContent(context.getString(R.string.habit_title), checked = false, habitId = null)
         }

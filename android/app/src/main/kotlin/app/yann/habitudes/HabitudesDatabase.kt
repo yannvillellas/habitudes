@@ -92,7 +92,7 @@ class HabitudesDatabase(private val context: Context) {
                     arrayOf(habitId, dateText),
                 )
             }
-            true
+            isTodayCompleted(habitId, dateText) == completed
         } catch (_: Exception) {
             false
         }
@@ -122,8 +122,7 @@ class HabitudesDatabase(private val context: Context) {
                     put(HabitudesDb.HABIT_ID_COLUMN, habitId)
                 },
                 SQLiteDatabase.CONFLICT_REPLACE,
-            )
-            true
+            ) != -1L
         } catch (_: Exception) {
             false
         }
@@ -136,8 +135,7 @@ class HabitudesDatabase(private val context: Context) {
                 HabitudesDb.WIDGET_INSTANCES_TABLE,
                 "${HabitudesDb.APPWIDGET_ID_COLUMN} = ?",
                 arrayOf(appWidgetId.toString()),
-            )
-            true
+            ) >= 0
         } catch (_: Exception) {
             false
         }
